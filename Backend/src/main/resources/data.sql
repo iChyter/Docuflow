@@ -1,0 +1,2 @@
+-- Este archivo está intencionalmente vacío
+-- Los datos iniciales se crean a través de variables de entorno por seguridad

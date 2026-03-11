@@ -1,0 +1,7 @@
+# Render.com Configuration
+
+# Build command
+build = mvn clean package -DskipTests
+
+# Start command
+start = java -Xmx512m -Xms256m -jar target/backend-0.0.1-SNAPSHOT.jar

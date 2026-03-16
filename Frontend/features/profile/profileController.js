@@ -1,6 +1,6 @@
-// Controller completo para gestión de perfiles de usuario
-import { docuFlowAPI } from '../../shared/services/apiClient.js';
-import { store } from '../../shared/services/store.js';
+// Controller para gestión de perfiles con Supabase
+import { userService } from '../../shared/services/userServiceSupabase.js';
+import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification, showLoading, hideLoading } from '../../shared/utils/uiHelpers.js';
 
 class ProfileController {
@@ -42,7 +42,7 @@ class ProfileController {
     try {
       showLoading('Cargando perfil...');
       
-      const response = await docuFlowAPI.profile.getCurrent();
+      const response = await userService.getCurrent();
       
       if (response.success) {
         this.profileData = response.data;
@@ -238,7 +238,7 @@ class ProfileController {
     try {
       showLoading('Subiendo avatar...');
       
-      const response = await docuFlowAPI.profile.uploadAvatar(this.avatarFile);
+      const response = await userService.uploadAvatar(this.avatarFile);
       
       if (response.success) {
         this.profileData.avatarUrl = response.data.avatarUrl;
@@ -303,7 +303,7 @@ class ProfileController {
     try {
       showLoading('Removiendo avatar...');
       
-      const response = await docuFlowAPI.profile.removeAvatar();
+      const response = await userService.removeAvatar();
       
       if (response.success) {
         this.profileData.avatarUrl = null;
@@ -360,7 +360,7 @@ class ProfileController {
       const formData = new FormData(this.profileForm);
       const profileData = Object.fromEntries(formData.entries());
       
-      const response = await docuFlowAPI.profile.update(profileData);
+      const response = await userService.update(profileData);
       
       if (response.success) {
         this.profileData = { ...this.profileData, ...profileData };
@@ -379,7 +379,7 @@ class ProfileController {
   // Cargar historial de actividad
   async loadActivityHistory() {
     try {
-      const response = await docuFlowAPI.profile.getActivity();
+      const response = await userService.getActivity();
       
       if (response.success) {
         this.activityHistory = response.data;
@@ -444,7 +444,7 @@ class ProfileController {
   // Cargar preferencias del usuario
   async loadUserPreferences() {
     try {
-      const response = await docuFlowAPI.profile.getPreferences();
+      const response = await userService.getPreferences();
       
       if (response.success) {
         this.preferences = response.data;
@@ -501,7 +501,7 @@ class ProfileController {
         preferences[key] = checkbox.checked;
       });
       
-      const response = await docuFlowAPI.profile.updatePreferences(preferences);
+      const response = await userService.updatePreferences(preferences);
       
       if (response.success) {
         this.preferences = { ...this.preferences, ...preferences };
@@ -568,7 +568,7 @@ class ProfileController {
     try {
       showLoading('Cambiando contraseña...');
       
-      const response = await docuFlowAPI.profile.changePassword({
+      const response = await userService.changePassword({
         currentPassword,
         newPassword
       });

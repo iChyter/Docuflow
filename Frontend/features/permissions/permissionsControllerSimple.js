@@ -1,6 +1,6 @@
-// permissionsControllerSimple.js - Controlador simplificado para gestión de permisos
-import { docuFlowAPI } from '../../shared/services/apiClientSimple.js';
-import authService from '../../shared/services/authServiceSimple.js';
+// permissionsControllerSimple.js - Controlador para gestión de permisos con Supabase
+import { userService } from '../../shared/services/userServiceSupabase.js';
+import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification } from '../../shared/utils/uiHelpers.js';
 
 class SimplePermissionsController {
@@ -12,12 +12,14 @@ class SimplePermissionsController {
   }
 
   async init() {
-    if (!authService.isLoggedIn()) {
+    // Verificar sesión simple
+    if (!authService.isAuthenticated()) {
       window.location.href = '../auth/login.html';
       return;
     }
 
-    if (!authService.isAdmin()) {
+    const user = authService.getCurrentUser();
+    if (user?.role !== 'admin') {
       showNotification('Solo los administradores pueden gestionar permisos', 'error');
       window.location.href = '../dashboard/dashboard.html';
       return;

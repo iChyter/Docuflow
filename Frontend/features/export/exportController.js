@@ -1,6 +1,6 @@
-// Controller completo para sistema de exportación de datos
-import { docuFlowAPI } from '../../shared/services/apiClient.js';
-import { store } from '../../shared/services/store.js';
+// Controller para exportación con Supabase
+import { logService } from '../../shared/services/logServiceSupabase.js';
+import { dashboardService } from '../../shared/services/dashboardServiceSupabase.js';
 import { showNotification, showLoading, hideLoading } from '../../shared/utils/uiHelpers.js';
 
 class ExportController {

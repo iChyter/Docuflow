@@ -1,5 +1,5 @@
-// loginControllerSimple.js - Controlador de login simplificado
-import authService from '../../shared/services/authServiceSimple.js';
+// loginControllerSimple.js - Controlador de login con Supabase
+import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification } from '../../shared/utils/uiHelpers.js';
 
 class SimpleLoginController {
@@ -40,10 +40,10 @@ class SimpleLoginController {
   async handleLogin(event) {
     event.preventDefault();
 
-    const username = document.getElementById('username')?.value.trim();
+    const email = document.getElementById('username')?.value.trim();
     const password = document.getElementById('password')?.value;
 
-    if (!username || !password) {
+    if (!email || !password) {
       showNotification('Por favor, completa todos los campos', 'error');
       return;
     }
@@ -51,18 +51,18 @@ class SimpleLoginController {
     this.setLoading(true);
 
     try {
-      const loginResult = await authService.login({ username, password });
+      const result = await authService.login(email, password);
 
-      if (loginResult.success) {
-        const user = loginResult.data.user;
-        showNotification(`¡Bienvenido ${user.name}!`, 'success');
+      if (result && result.user) {
+        const user = result.user;
+        showNotification(`¡Bienvenido ${user?.full_name || user?.username || 'Usuario'}!`, 'success');
 
         setTimeout(() => {
           window.location.href = '../dashboard/dashboard.html';
         }, 1000);
 
       } else {
-        throw new Error(loginResult.error || 'Credenciales incorrectas');
+        throw new Error('Credenciales incorrectas');
       }
 
     } catch (error) {
@@ -99,10 +99,9 @@ class SimpleLoginController {
 
   // Limpiar credenciales almacenadas para forzar login real
   clearStoredCredentials() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    authService.currentUser = null;
-    authService.isAuthenticated = false;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('refreshToken');
   }
 }
 

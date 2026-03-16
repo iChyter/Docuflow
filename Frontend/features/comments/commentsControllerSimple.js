@@ -1,6 +1,6 @@
 // commentsControllerSimple.js - Controlador simplificado para comentarios y tareas
-import { docuFlowAPI } from '../../shared/services/apiClientSimple.js';
-import authService from '../../shared/services/authServiceSimple.js';
+import { commentService } from '../../shared/services/commentServiceSupabase.js';
+import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification } from '../../shared/utils/uiHelpers.js';
 
 class SimpleCommentsController {
@@ -11,11 +11,7 @@ class SimpleCommentsController {
   }
 
   async init() {
-    if (!authService.isLoggedIn()) {
-      window.location.href = '../auth/login.html';
-      return;
-    }
-
+    // Permitir ver comentarios sin autenticación
     // Obtener fileId de la URL
     const urlParams = new URLSearchParams(window.location.search);
     this.currentFileId = urlParams.get('fileId');
@@ -71,6 +67,12 @@ class SimpleCommentsController {
   async handleSubmitComment(event) {
     event.preventDefault();
 
+    // Verificar autenticación antes de comentar
+    if (!authService.isAuthenticated()) {
+      showNotification('Debes iniciar sesión para comentar', 'error');
+      return;
+    }
+
     const content = document.getElementById('commentContent').value.trim();
     const type = document.getElementById('commentType').value;
     
@@ -79,11 +81,12 @@ class SimpleCommentsController {
       return;
     }
 
+    const user = authService.getCurrentUser();
     const commentData = {
       fileId: this.currentFileId,
       content,
       type,
-      author: authService.getCurrentUser().email,
+      author: user?.email || user?.username || 'Anónimo',
       createdAt: new Date().toISOString()
     };
 
@@ -95,7 +98,7 @@ class SimpleCommentsController {
     }
 
     try {
-      const response = await docuFlowAPI.comments.create(commentData);
+      const response = await commentService.create(commentData);
       
       if (response.success) {
         showNotification(`${type === 'task' ? 'Tarea' : 'Comentario'} agregado correctamente`, 'success');
@@ -116,10 +119,10 @@ class SimpleCommentsController {
 
   async loadComments() {
     try {
-      const response = await docuFlowAPI.comments.list(this.currentFileId);
+      const comments = await commentService.byDocument(parseInt(this.currentFileId));
       
-      if (response.success) {
-        this.comments = response.data.comments || [];
+      if (comments) {
+        this.comments = comments || [];
         this.renderCommentsList();
         this.updateStats();
       }
@@ -237,7 +240,7 @@ class SimpleCommentsController {
         completed: !comment.completed
       };
 
-      const response = await docuFlowAPI.comments.update(commentId, updatedComment);
+      const response = await commentService.update(commentId, updatedComment);
       
       if (response.success) {
         showNotification(
@@ -266,7 +269,7 @@ class SimpleCommentsController {
     if (!confirm(`¿Estás seguro de eliminar este ${type}?`)) return;
 
     try {
-      const response = await docuFlowAPI.comments.delete(commentId);
+      const response = await commentService.delete(commentId);
       
       if (response.success) {
         showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} eliminado`, 'success');
@@ -333,7 +336,7 @@ class SimpleCommentsController {
     }
 
     try {
-      const response = await docuFlowAPI.comments.update(commentId, updatedComment);
+      const response = await commentService.update(commentId, updatedComment);
       
       if (response.success) {
         showNotification('Comentario actualizado correctamente', 'success');

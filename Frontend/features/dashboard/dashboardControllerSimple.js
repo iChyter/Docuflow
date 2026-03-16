@@ -1,6 +1,6 @@
-// Dashboard Controller simplificado sin sistemas de seguridad complejos
-import { docuFlowAPI } from '../../shared/services/apiClientSimple.js';
-import authService from '../../shared/services/authServiceSimple.js';
+// Dashboard Controller con Supabase
+import { dashboardService } from '../../shared/services/dashboardServiceSupabase.js';
+import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification, formatDate } from '../../shared/utils/uiHelpers.js';
 
 class SimpleDashboardController {
@@ -12,12 +12,7 @@ class SimpleDashboardController {
 
   async init() {
     try {
-      // Verificar autenticación
-      if (!authService.isLoggedIn()) {
-        window.location.href = '../auth/login.html';
-        return;
-      }
-
+      // Permitir ver el dashboard sin autenticación (solo datos demo)
       this.setupEventListeners();
       await this.loadDashboardData();
       this.updateUI();
@@ -61,11 +56,32 @@ class SimpleDashboardController {
     try {
       showNotification('Actualizando datos...', 'info', 1000);
 
-      // Cargar estadísticas básicas (desde modo demo)
-      const statsResponse = await this.getDemoStats();
+      // Cargar datos reales desde Supabase
+      const data = await dashboardService.full();
       
-      if (statsResponse.success) {
-        this.stats = statsResponse.data;
+      if (data) {
+        this.stats = {
+          totalFiles: data.stats?.total_files || 0,
+          totalUsers: data.stats?.total_users || 0,
+          totalComments: data.stats?.total_comments || 0,
+          pendingTasks: data.stats?.total_notifications || 0,
+          storageUsed: (data.stats?.total_storage || 0) / (1024 * 1024 * 1024), // Convertir a GB
+          storageLimit: 1, // 1GB límite en Supabase Free
+          recentFiles: data.recentFiles?.map(f => ({
+            id: f.id,
+            name: f.filename,
+            uploadedBy: f.profiles?.username || 'Usuario',
+            uploadedAt: f.uploaded_at,
+            size: f.size
+          })) || [],
+          recentActivity: data.recentActivities?.map(a => ({
+            id: a.id,
+            action: a.action,
+            username: a.username || 'Usuario',
+            timestamp: a.created_at,
+            details: a.details
+          })) || []
+        };
         this.renderStats();
         this.renderRecentActivity();
         this.renderQuickActions();
@@ -73,7 +89,15 @@ class SimpleDashboardController {
 
     } catch (error) {
       console.error('Error cargando datos del dashboard:', error);
-      showNotification('Error cargando datos', 'error');
+      showNotification('Error cargando datos. Usando datos locales.', 'error');
+      // Fallback a datos demo
+      const statsResponse = await this.getDemoStats();
+      if (statsResponse.success) {
+        this.stats = statsResponse.data;
+        this.renderStats();
+        this.renderRecentActivity();
+        this.renderQuickActions();
+      }
     }
   }
 
@@ -244,9 +268,10 @@ class SimpleDashboardController {
     if (!actionsContainer) return;
 
     const user = authService.getCurrentUser();
-    const canUpload = authService.hasPermission('upload_files');
-    const canViewLogs = authService.hasPermission('view_logs');
-    const isAdmin = authService.isAdmin();
+    const userRole = user?.role || 'viewer';
+    const canUpload = userRole === 'admin' || userRole === 'colaborador';
+    const canViewLogs = userRole === 'admin';
+    const isAdmin = userRole === 'admin';
 
     actionsContainer.innerHTML = `
       <h5>Acciones Rápidas</h5>
@@ -290,10 +315,10 @@ class SimpleDashboardController {
     
     // Actualizar información del usuario
     const userInfo = document.getElementById('userInfo');
-    if (userInfo) {
+    if (userInfo && user) {
       userInfo.innerHTML = `
         <div class="user-welcome">
-          <h4>Bienvenido, ${user.name}</h4>
+          <h4>Bienvenido, ${user.full_name || user.username}</h4>
           <p class="text-muted">Rol: ${user.role}</p>
         </div>
       `;
@@ -369,5 +394,61 @@ const dashboardController = new SimpleDashboardController();
 
 // Hacer disponible globalmente
 window.dashboardController = dashboardController;
+
+// Función para refrescar el dashboard desde el HTML
+window.refreshDashboard = () => {
+  dashboardController.loadDashboardData();
+};
+
+// Función para mostrar acciones rápidas
+window.showQuickActions = () => {
+  // Crear modal de acciones rápidas
+  const modalHtml = `
+    <div class="modal fade" id="quickActionsModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Acciones Rápidas</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="d-grid gap-2">
+              <a href="../files/upload.html" class="btn btn-outline-primary">
+                <i class="bi bi-cloud-upload"></i> Subir Archivo
+              </a>
+              <a href="../comments/comments.html" class="btn btn-outline-success">
+                <i class="bi bi-chat-dots"></i> Nuevo Comentario
+              </a>
+              <a href="../logs/logs.html" class="btn btn-outline-info">
+                <i class="bi bi-journal-text"></i> Ver Logs
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Remover modal existente si hay
+  const existingModal = document.getElementById('quickActionsModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Agregar modal al body
+  const modalContainer = document.createElement('div');
+  modalContainer.innerHTML = modalHtml;
+  document.body.appendChild(modalContainer);
+  
+  // Mostrar modal
+  const modal = new bootstrap.Modal(document.getElementById('quickActionsModal'));
+  modal.show();
+};
+
+// Función global para logout
+window.handleLogout = async () => {
+  await authService.logout();
+  window.location.href = '../auth/login.html';
+};
 
 export default dashboardController;

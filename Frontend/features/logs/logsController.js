@@ -1,6 +1,6 @@
-// logsControllerSimple.js - Controlador simplificado para gestión de logs
-import { docuFlowAPI } from '../../shared/services/apiClientSimple.js';
-import authService from '../../shared/services/authServiceSimple.js';
+// logsController.js - Controlador para gestión de logs con Supabase
+import { logService } from '../../shared/services/logServiceSupabase.js';
+import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification } from '../../shared/utils/uiHelpers.js';
 
 class SimpleLogsController {
@@ -11,13 +11,18 @@ class SimpleLogsController {
   }
 
   async init() {
-    if (!authService.isLoggedIn()) {
+    // Verificar sesión simple
+    if (!authService.isAuthenticated()) {
       window.location.href = '../auth/login.html';
       return;
     }
 
-    if (!authService.hasPermission('view_logs')) {
+    const user = authService.getCurrentUser();
+    if (user?.role !== 'admin') {
       showNotification('No tienes permisos para ver los logs', 'error');
+      window.location.href = '../dashboard/dashboard.html';
+      return;
+    }
       window.location.href = '../dashboard/dashboard.html';
       return;
     }
@@ -82,7 +87,7 @@ class SimpleLogsController {
     try {
       showNotification('Cargando logs...', 'info', 1000);
 
-      const response = await docuFlowAPI.logs.list();
+      const logs = await logService.list(50);
       
       if (response.success) {
         this.logs = response.data.logs || [];

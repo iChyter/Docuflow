@@ -1,61 +1,94 @@
-// authServiceSupabase.js - Sistema simple de sesión
+// authServiceSupabase.js - Sistema de autenticación con Supabase Auth
+import { supabase } from './supabaseClient.js'
 import { SUPABASE_CONFIG } from './config.js'
 
 const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.auth
 
 export const authService = {
   async login(email, password) {
-    const response = await fetch(EDGE_FUNCTION_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'login', 
-        data: { email, password } 
+    try {
+      // Usar Supabase Auth directamente para obtener token JWT válido
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       })
-    })
 
-    const result = await response.json()
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Login failed')
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      const { user, session } = data
+      
+      // Guardar en localStorage
+      localStorage.setItem('docuflow_user', JSON.stringify(user))
+      localStorage.setItem('docuflow_login_time', Date.now().toString())
+      if (session?.access_token) {
+        localStorage.setItem('docuflow_token', session.access_token)
+      }
+
+      return { user, token: session?.access_token }
+    } catch (error) {
+      console.error('Login error:', error)
+      throw error
     }
-
-    const { user } = result.data
-    
-    // Guardar en localStorage
-    localStorage.setItem('docuflow_user', JSON.stringify(user))
-    localStorage.setItem('docuflow_login_time', Date.now().toString())
-
-    return { user }
   },
 
   async register(email, password, username, fullName) {
-    const response = await fetch(EDGE_FUNCTION_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        action: 'register', 
-        data: { email, password, username, fullName } 
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            full_name: fullName
+          }
+        }
       })
-    })
 
-    const result = await response.json()
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Registration failed')
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      return data
+    } catch (error) {
+      console.error('Register error:', error)
+      throw error
     }
-
-    return result.data
   },
 
-  logout() {
+  async logout() {
+    try {
+      await supabase.auth.signOut()
+    } catch (error) {
+      console.warn('Logout warning:', error.message)
+    }
+    
     localStorage.removeItem('docuflow_user')
     localStorage.removeItem('docuflow_login_time')
+    localStorage.removeItem('docuflow_token')
   },
 
-  getCurrentUser() {
-    const user = localStorage.getItem('docuflow_user')
-    return user ? JSON.parse(user) : null
+  async getCurrentUser() {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error) {
+        console.warn('Error getting user:', error.message)
+        // Falls back to stored user
+        const stored = localStorage.getItem('docuflow_user')
+        return stored ? JSON.parse(stored) : null
+      }
+      
+      if (user) {
+        localStorage.setItem('docuflow_user', JSON.stringify(user))
+      }
+      
+      return user
+    } catch (error) {
+      const stored = localStorage.getItem('docuflow_user')
+      return stored ? JSON.parse(stored) : null
+    }
   },
 
   isAuthenticated() {
@@ -65,7 +98,7 @@ export const authService = {
     const loginTime = parseInt(localStorage.getItem('docuflow_login_time') || '0')
     const now = Date.now()
     const elapsed = now - loginTime
-    const SESSION_DURATION = 24 * 60 * 60 * 1000 // 24 horas
+    const SESSION_DURATION = 24 * 60 * 60 * 1000
     
     if (elapsed > SESSION_DURATION) {
       this.logout()
@@ -76,6 +109,26 @@ export const authService = {
   },
 
   getToken() {
-    return 'simple-session-token'
+    return localStorage.getItem('docuflow_token') || ''
+  },
+
+  async checkSession() {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (session) {
+        localStorage.setItem('docuflow_token', session.access_token)
+        localStorage.setItem('docuflow_user', JSON.stringify(session.user))
+        localStorage.setItem('docuflow_login_time', Date.now().toString())
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      return false
+    }
   }
 }
+
+// Verificar sesión al cargar
+authService.checkSession()

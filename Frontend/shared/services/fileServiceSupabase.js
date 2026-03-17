@@ -5,11 +5,12 @@ import { authService } from './authServiceSupabase.js'
 const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.files
 
 async function callEdgeFunction(action, data = {}) {
-  // No enviar token, las funciones son públicas para lectura
+  const token = authService.getToken() || ''
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({ action, data })
   })
@@ -41,12 +42,19 @@ export const fileService = {
   },
 
   async upload(file, onProgress = null) {
-    const user = authService.getCurrentUser()
+    const user = await authService.getCurrentUser()
+    console.log('Upload - User:', user);
     if (!user) throw new Error('Not authenticated')
+    
+    // Obtener el ID del usuario - puede estar en diferentes campos
+    const userId = user.id || user.user_id;
+    if (!userId) throw new Error('User ID not found')
 
     const fileName = `${Date.now()}_${file.name}`
-    const filePath = `${user.id}/${fileName}`
+    const filePath = `${userId}/${fileName}`
+    console.log('Upload - File path:', filePath);
 
+    // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from(SUPABASE_CONFIG.bucket)
       .upload(filePath, file, {
@@ -56,17 +64,18 @@ export const fileService = {
       })
 
     if (error) {
+      console.error('Storage upload error:', error)
       throw new Error(error.message || 'Upload failed')
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from(SUPABASE_CONFIG.bucket)
       .getPublicUrl(filePath)
 
     const document = await callEdgeFunction('create', {
       filename: file.name,
       fileType: file.type,
-      filePath: publicUrl,
+      filePath: urlData.publicUrl,
       size: file.size
     })
 
@@ -74,23 +83,57 @@ export const fileService = {
   },
 
   async delete(id) {
+    // Primero obtener el documento para obtener el file_path
     const doc = await callEdgeFunction('get', { id })
+    console.log('Delete - Document:', doc)
     
-    const filePath = doc.file_path.split('/').slice(-2).join('/')
+    let filePath = doc?.file_path
     
-    await supabase.storage
-      .from(SUPABASE_CONFIG.bucket)
-      .remove([filePath])
-
+    // Extraer el path relativo
+    if (filePath) {
+      if (filePath.includes('/storage/v1/object/public/')) {
+        filePath = filePath.split('/storage/v1/object/public/')[1]
+      } else if (filePath.includes('/storage/v1/object/')) {
+        filePath = filePath.split('/storage/v1/object/')[1]
+      }
+      console.log('Delete - Storage path:', filePath)
+      
+      // Intentar eliminar del storage
+      if (filePath && filePath.includes('/')) {
+        try {
+          const { error } = await supabase.storage
+            .from(SUPABASE_CONFIG.bucket)
+            .remove([filePath])
+          
+          if (error) {
+            console.warn('Storage delete warning:', error.message)
+          } else {
+            console.log('File deleted from storage')
+          }
+        } catch (e) {
+          console.warn('Storage delete error:', e.message)
+        }
+      }
+    }
+    
+    // Luego eliminar el registro de la base de datos
     return await callEdgeFunction('delete', { id })
   },
 
   async download(id) {
     const doc = await callEdgeFunction('get', { id })
     
+    if (!doc?.file_path) {
+      throw new Error('File path not found')
+    }
+
+    // Extract path from URL
+    const pathParts = doc.file_path.split('/storage/v1/object/public/')
+    const filePath = pathParts[1] || doc.file_path
+    
     const { data, error } = await supabase.storage
       .from(SUPABASE_CONFIG.bucket)
-      .download(doc.file_path)
+      .download(filePath)
 
     if (error) {
       throw new Error(error.message || 'Download failed')
@@ -101,7 +144,7 @@ export const fileService = {
 
   async getDownloadUrl(id) {
     const doc = await callEdgeFunction('get', { id })
-    return doc.file_path
+    return doc?.file_path
   },
 
   async stats() {

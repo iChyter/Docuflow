@@ -1,23 +1,35 @@
-import { BACKEND_URL } from './config.js';
+import { SUPABASE_CONFIG } from './config.js';
+import { authService } from './authServiceSupabase.js';
 
-const getAuthToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.logs;
 
-// 🔹 Logs
+async function callEdgeFunction(action, data = {}) {
+  const token = authService.getToken();
+  
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    },
+    body: JSON.stringify({ action, data })
+  });
+
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Unknown error');
+  }
+  
+  return result.data;
+}
+
 export async function apiGetLogs() {
-  const token = getAuthToken();
-  if (!token) return { success: false, logs: [] };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/dashboard/logs`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    if (response.ok && data) {
-      return { success: true, logs: Array.isArray(data) ? data : (data.logs || []) };
-    } else {
-      return { success: false, logs: [], error: data?.error };
-    }
-  } catch {
-    return { success: false, logs: [] };
+    const logs = await callEdgeFunction('list', { limit: 100 });
+    return { success: true, logs: Array.isArray(logs) ? logs : [] };
+  } catch (error) {
+    console.error('Error getting logs:', error);
+    return { success: false, logs: [], error: error.message };
   }
 }

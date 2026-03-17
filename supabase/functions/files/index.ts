@@ -15,21 +15,24 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { action, data } = await req.json()
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
+    const { action, data } = await req.json().catch(() => ({ action: '', data: {} }))
+    const authHeader = req.headers.get('Authorization')
+    const token = authHeader ? authHeader.replace('Bearer ', '') : null
     
     let user = null
     if (token) {
-      const { data: { user: u } } = await supabase.auth.getUser(token)
-      user = u
+      try {
+        const { data: { user: u } } = await supabase.auth.getUser(token)
+        user = u
+      } catch (e) {
+        console.log('Token validation failed:', e.message)
+      }
     }
 
     let result = null
 
     switch (action) {
       case 'list': {
-        // Público - no requiere auth
         let query = supabase
           .from('documents')
           .select('*, profiles(username, full_name)')
@@ -40,45 +43,40 @@ Deno.serve(async (req) => {
         if (data?.offset) query = query.range(data.offset, data.offset + (data.limit || 10) - 1)
 
         const { data: documents } = await query
-        result = documents
+        result = documents || []
         break
       }
 
       case 'search': {
-        // Público - no requiere auth
-        
         const { data: documents } = await supabase
           .from('documents')
           .select('*')
           .eq('is_deleted', false)
-          .ilike('filename', `%${data.q}%`)
+          .ilike('filename', `%${data?.q || ''}%`)
           .order('uploaded_at', { ascending: false })
-          .limit(data.limit || 10)
+          .limit(data?.limit || 10)
         
-        result = documents
+        result = documents || []
         break
       }
 
       case 'recent': {
-        // Público - no requiere auth
         const { data: documents } = await supabase
           .from('documents')
           .select('*')
           .eq('is_deleted', false)
           .order('uploaded_at', { ascending: false })
-          .limit(data.limit || 5)
+          .limit(data?.limit || 5)
         
-        result = documents
+        result = documents || []
         break
       }
 
       case 'get': {
-        // Público - no requiere auth
-        
         const { data: document } = await supabase
           .from('documents')
           .select('*, profiles(username, full_name)')
-          .eq('id', data.id)
+          .eq('id', data?.id)
           .single()
         
         result = document
@@ -126,11 +124,16 @@ Deno.serve(async (req) => {
       case 'delete': {
         if (!user) throw new Error('Unauthorized')
         
-        const { data: document } = await supabase
+        // Obtener el documento completo para obtener el file_path
+        const { data: document, error: docError } = await supabase
           .from('documents')
-          .select('uploaded_by')
-          .eq('id', data.id)
+          .select('*, profiles(username, full_name)')
+          .eq('id', data?.id)
           .single()
+
+        if (docError || !document) {
+          throw new Error('Document not found')
+        }
 
         const { data: profile } = await supabase
           .from('profiles')
@@ -142,15 +145,44 @@ Deno.serve(async (req) => {
           throw new Error('Forbidden')
         }
 
+        // Eliminar archivo del Storage
+        if (document.file_path) {
+          try {
+            // Extraer el path relativo del archivo
+            let filePath = document.file_path
+            if (filePath.includes('/storage/v1/object/public/')) {
+              filePath = filePath.split('/storage/v1/object/public/')[1]
+            } else if (filePath.includes('/storage/v1/object/')) {
+              filePath = filePath.split('/storage/v1/object/')[1]
+            }
+            
+            console.log('Deleting file from storage:', filePath)
+            
+            // Eliminar usando el cliente con service role key
+            const { error: storageError } = await supabase.storage
+              .from('documents')
+              .remove([filePath])
+            
+            if (storageError) {
+              console.error('Storage delete error:', storageError)
+            } else {
+              console.log('File deleted from storage successfully')
+            }
+          } catch (storageErr) {
+            console.error('Storage delete exception:', storageErr)
+          }
+        }
+
+        // Marcar documento como eliminado
         await supabase
           .from('documents')
           .update({ is_deleted: true })
-          .eq('id', data.id)
+          .eq('id', data?.id)
 
         await supabase.from('logs').insert({
           action: 'delete',
           user_id: user.id,
-          document_id: data.id,
+          document_id: data?.id,
           details: `Deleted file`
         })
 
@@ -159,7 +191,6 @@ Deno.serve(async (req) => {
       }
 
       case 'stats': {
-        // Público - no requiere auth
         const { count: totalFiles } = await supabase
           .from('documents')
           .select('*', { count: 'exact', head: true })
@@ -190,7 +221,6 @@ Deno.serve(async (req) => {
       }
 
       case 'count': {
-        // Público - no requiere auth
         const { count } = await supabase
           .from('documents')
           .select('*', { count: 'exact', head: true })
@@ -201,8 +231,6 @@ Deno.serve(async (req) => {
       }
 
       case 'total-size': {
-        // Público - no requiere auth
-        
         const { data: files } = await supabase
           .from('documents')
           .select('size')
@@ -214,7 +242,7 @@ Deno.serve(async (req) => {
       }
 
       default:
-        throw new Error('Invalid action')
+        result = []
     }
 
     return new Response(JSON.stringify({ success: true, data: result }), {

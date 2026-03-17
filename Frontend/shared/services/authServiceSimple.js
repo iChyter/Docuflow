@@ -1,90 +1,126 @@
-// authServiceSimple.js - Servicio de autenticación simplificado
-import { docuFlowAPI } from './apiClientSimple.js';
+// authServiceSimple.js - Servicio de autenticación simplificado basado en Supabase
+import { supabase } from './supabaseClient.js';
+import { SUPABASE_CONFIG } from './config.js';
+
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.auth;
 
 class SimpleAuthService {
   constructor() {
     this.currentUser = null;
     this.isAuthenticated = false;
-    // No cargar usuario automáticamente para forzar login real
   }
 
-  // Cargar usuario almacenado
-  loadStoredUser() {
+  async loadStoredUser() {
     try {
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
+      const { data: { session }, error } = await supabase.auth.getSession();
       
-      if (token && userStr) {
-        this.currentUser = JSON.parse(userStr);
+      if (session) {
+        this.currentUser = session.user;
         this.isAuthenticated = true;
+        localStorage.setItem('docuflow_token', session.access_token);
+        localStorage.setItem('docuflow_user', JSON.stringify(session.user));
+        localStorage.setItem('docuflow_login_time', Date.now().toString());
+      } else {
+        const token = localStorage.getItem('docuflow_token');
+        const userStr = localStorage.getItem('docuflow_user');
+        
+        if (token && userStr) {
+          this.currentUser = JSON.parse(userStr);
+          this.isAuthenticated = true;
+        }
       }
     } catch (error) {
-      console.warn('Error cargando usuario almacenado:', error);
-      this.logout();
+      console.warn('Error cargando usuario:', error.message);
     }
   }
 
-  // Iniciar sesión
   async login(credentials) {
     try {
-      const response = await docuFlowAPI.auth.login(credentials);
-      
-      if (response.success && response.data) {
-        this.currentUser = response.data.user;
-        this.isAuthenticated = true;
-        
-        // Almacenar en localStorage
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        console.log('✅ Login exitoso:', this.currentUser.name);
-        return { success: true, data: response.data };
-      } else {
-        throw new Error(response.error || 'Error de autenticación');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.username || credentials.email,
+        password: credentials.password
+      });
+
+      if (error) {
+        throw new Error(error.message);
       }
+
+      const { user, session } = data;
+      
+      this.currentUser = user;
+      this.isAuthenticated = true;
+      
+      localStorage.setItem('docuflow_token', session.access_token);
+      localStorage.setItem('docuflow_user', JSON.stringify(user));
+      localStorage.setItem('docuflow_login_time', Date.now().toString());
+      
+      console.log('✅ Login exitoso:', user.email);
+      return { success: true, user, token: session.access_token };
     } catch (error) {
       console.error('❌ Error en login:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Cerrar sesión
   async logout() {
     try {
-      await docuFlowAPI.auth.logout();
+      await supabase.auth.signOut();
     } catch (error) {
-      console.warn('Error al cerrar sesión en servidor:', error);
+      console.warn('Error al cerrar sesión:', error.message);
     }
     
-    // Limpiar estado local
     this.currentUser = null;
     this.isAuthenticated = false;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('docuflow_token');
+    localStorage.removeItem('docuflow_user');
+    localStorage.removeItem('docuflow_login_time');
     
     console.log('✅ Sesión cerrada');
     return { success: true };
   }
 
-  // Obtener usuario actual
   getCurrentUser() {
+    if (!this.currentUser) {
+      const userStr = localStorage.getItem('docuflow_user');
+      if (userStr) {
+        try {
+          this.currentUser = JSON.parse(userStr);
+        } catch (e) {}
+      }
+    }
     return this.currentUser;
   }
 
-  // Verificar si está autenticado
   isLoggedIn() {
-    return this.isAuthenticated && this.currentUser && localStorage.getItem('token');
+    const user = localStorage.getItem('docuflow_user');
+    if (!user) return false;
+    
+    const loginTime = parseInt(localStorage.getItem('docuflow_login_time') || '0');
+    const now = Date.now();
+    const elapsed = now - loginTime;
+    const SESSION_DURATION = 24 * 60 * 60 * 1000;
+    
+    if (elapsed > SESSION_DURATION) {
+      this.logout();
+      return false;
+    }
+    
+    return true;
   }
 
-  // Verificar permisos básicos
+  isAuthenticated() {
+    return this.isLoggedIn();
+  }
+
   hasPermission(permission) {
-    if (!this.isAuthenticated || !this.currentUser) return false;
+    const user = this.getCurrentUser();
+    if (!user) return false;
     
-    const role = this.currentUser.role;
+    const role = user.role || 'colaborador';
     
     switch (permission) {
       case 'upload_files':
-        return ['admin', 'user'].includes(role);
+        return ['admin', 'colaborador'].includes(role);
       case 'delete_files':
         return ['admin'].includes(role);
       case 'manage_users':
@@ -92,48 +128,55 @@ class SimpleAuthService {
       case 'view_logs':
         return ['admin'].includes(role);
       case 'read_files':
-        return ['admin', 'user', 'guest'].includes(role);
+        return true;
       default:
         return false;
     }
   }
 
-  // Verificar si es administrador
   isAdmin() {
-    return this.currentUser?.role === 'admin';
+    const user = this.getCurrentUser();
+    return user?.role === 'admin';
   }
 
-  // Verificar si es usuario regular
   isUser() {
-    return this.currentUser?.role === 'user';
+    const user = this.getCurrentUser();
+    return user?.role === 'colaborador';
   }
 
-  // Obtener token
   getToken() {
-    return localStorage.getItem('token');
+    return localStorage.getItem('docuflow_token') || '';
   }
 
-  // Verificar si el token es válido (básico)
   isTokenValid() {
     const token = this.getToken();
-    if (!token) return false;
-    
-    // Verificación básica - en un sistema real verificarías la expiración
-    return token.startsWith('demo-token-') || token.length > 10;
+    return token.length > 0;
   }
 
-  // Renovar sesión (simplificado)
   async refreshSession() {
-    if (!this.isTokenValid()) {
-      await this.logout();
+    try {
+      const { data: { session }, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        await this.logout();
+        return false;
+      }
+      
+      if (session) {
+        localStorage.setItem('docuflow_token', session.access_token);
+        localStorage.setItem('docuflow_user', JSON.stringify(session.user));
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
       return false;
     }
-    return true;
   }
 }
 
-// Instancia global
 const authService = new SimpleAuthService();
+authService.loadStoredUser();
 
 export { SimpleAuthService, authService };
 export default authService;

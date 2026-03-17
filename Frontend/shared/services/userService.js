@@ -1,17 +1,35 @@
-import { BACKEND_URL } from './config.js';
-import { apiClient } from './apiClient.js';
+import { SUPABASE_CONFIG } from './config.js';
+import { authService } from './authServiceSupabase.js';
 
-const getAuthToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.users;
 
-// 🔹 Usuarios
+async function callEdgeFunction(action, data = {}) {
+  const token = authService.getToken();
+  
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    },
+    body: JSON.stringify({ action, data })
+  });
 
-// Obtener roles disponibles
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Unknown error');
+  }
+  
+  return result.data;
+}
+
 export async function apiGetRoles() {
   try {
-    const response = await apiClient.get('/users/roles');
+    const roles = await callEdgeFunction('get-roles');
     return { 
       success: true, 
-      roles: response.roles || response.data || response || [] 
+      roles: roles || [] 
     };
   } catch (error) {
     console.error('Error obteniendo roles:', error);
@@ -23,10 +41,9 @@ export async function apiGetRoles() {
   }
 }
 
-// Cambiar el rol de un usuario
 export async function apiSetUserRole(userId, role) {
   try {
-    await apiClient.put(`/users/${userId}/role`, { role });
+    await callEdgeFunction('set-user-role', { userId, role });
     return { success: true };
   } catch (error) {
     console.error('Error cambiando rol de usuario:', error);
@@ -37,55 +54,29 @@ export async function apiSetUserRole(userId, role) {
   }
 }
 
-// Obtener permisos de un usuario
 export async function apiGetUserPermissions(userId) {
-  const token = getAuthToken();
-  if (!token) return { success: false, permissions: [] };
   try {
-    const response = await fetch(`${BACKEND_URL}/users/${userId}/permissions`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    if (response.ok && data) {
-      return { success: true, permissions: data };
-    } else {
-      return { success: false, permissions: [], error: data?.error };
-    }
-  } catch {
-    return { success: false, permissions: [] };
+    const permissions = await callEdgeFunction('get-user-permissions', { userId });
+    return { success: true, permissions: permissions || [] };
+  } catch (error) {
+    console.error('Error obteniendo permisos:', error);
+    return { success: false, permissions: [], error: error.message };
   }
 }
 
-// Actualizar permisos de un usuario
 export async function apiSetUserPermissions(userId, permissions) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/users/${userId}/permissions`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ permissions })
-    });
-    if (response.ok) {
-      return { success: true };
-    } else {
-      const data = await response.json().catch(() => null);
-      return { success: false, error: data?.error };
-    }
-  } catch {
-    return { success: false };
+    await callEdgeFunction('set-user-permissions', { userId, permissions });
+    return { success: true };
+  } catch (error) {
+    console.error('Error estableciendo permisos:', error);
+    return { success: false, error: error.message };
   }
 }
-// Obtener lista de usuarios
+
 export async function apiGetUsers() {
   try {
-    const response = await apiClient.get('/users');
-    const users = response.users || response.data || response;
-    
+    const users = await callEdgeFunction('get-users');
     return { 
       success: true, 
       users: Array.isArray(users) ? users : [] 
@@ -100,13 +91,12 @@ export async function apiGetUsers() {
   }
 }
 
-// Crear nuevo usuario
 export async function apiCreateUser(userData) {
   try {
-    const response = await apiClient.post('/auth/register', userData);
+    const user = await callEdgeFunction('create-user', userData);
     return { 
       success: true, 
-      user: response.user || response.data || response 
+      user: user || userData 
     };
   } catch (error) {
     console.error('Error creando usuario:', error);
@@ -117,13 +107,12 @@ export async function apiCreateUser(userData) {
   }
 }
 
-// Actualizar usuario existente
 export async function apiUpdateUser(userId, userData) {
   try {
-    const response = await apiClient.put(`/users/${userId}`, userData);
+    const user = await callEdgeFunction('update-user', { userId, ...userData });
     return { 
       success: true, 
-      user: response.user || response.data || response 
+      user: user || userData 
     };
   } catch (error) {
     console.error('Error actualizando usuario:', error);
@@ -134,10 +123,9 @@ export async function apiUpdateUser(userId, userData) {
   }
 }
 
-// Eliminar usuario
 export async function apiDeleteUser(userId) {
   try {
-    await apiClient.delete(`/users/${userId}`);
+    await callEdgeFunction('delete-user', { userId });
     return { success: true };
   } catch (error) {
     console.error('Error eliminando usuario:', error);
@@ -148,34 +136,12 @@ export async function apiDeleteUser(userId) {
   }
 }
 
-export async function login(username, password) {
+export async function login(email, password) {
   try {
-    const response = await fetch(`${BACKEND_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-    const data = await response.json().catch(() => null);
-    if (response.ok && data?.token) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("authToken", data.token);
-      if (data.refreshToken) {
-        localStorage.setItem("refreshToken", data.refreshToken);
-      }
-      if (typeof data.expiresIn === 'number') {
-        const expiresAt = Date.now() + data.expiresIn * 1000;
-        localStorage.setItem("tokenExpiresAt", expiresAt.toString());
-      }
-      if (data.user) {
-        localStorage.setItem("userData", JSON.stringify(data.user));
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-      return { success: true, token: data.token };
-    } else {
-      return { success: false, error: data?.error || "Credenciales inválidas" };
-    }
-  } catch (err) {
-    console.error("Error en login:", err);
-    return { success: false, error: "No se pudo conectar con el servidor" };
+    const result = await authService.login(email, password);
+    return { success: true, user: result.user, token: result.token };
+  } catch (error) {
+    console.error('Error en login:', error);
+    return { success: false, error: error.message || 'No se pudo conectar con el servidor' };
   }
 }

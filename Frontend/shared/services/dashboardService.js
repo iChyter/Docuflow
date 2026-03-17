@@ -1,21 +1,35 @@
-import { BACKEND_URL } from './config.js';
+import { SUPABASE_CONFIG } from './config.js';
+import { authService } from './authServiceSupabase.js';
 
-const getAuthToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.dashboard;
+
+async function callEdgeFunction(action, data = {}) {
+  const token = authService.getToken();
+  
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    },
+    body: JSON.stringify({ action, data })
+  });
+
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Unknown error');
+  }
+  
+  return result.data;
+}
 
 export async function apiGetDownloadsToday() {
-  const token = getAuthToken();
-  if (!token) return { success: false, count: 0 };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/dashboard/downloads/today`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    if (response.ok && data) {
-      return { success: true, count: data.count ?? 0 };
-    } else {
-      return { success: false, count: 0, error: data?.error };
-    }
-  } catch {
-    return { success: false, count: 0 };
+    const data = await callEdgeFunction('downloads-today');
+    return { success: true, count: data?.count ?? 0 };
+  } catch (error) {
+    console.error('Error getting downloads:', error);
+    return { success: false, count: 0, error: error.message };
   }
 }

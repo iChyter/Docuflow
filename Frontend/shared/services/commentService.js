@@ -1,98 +1,75 @@
-import { BACKEND_URL } from './config.js';
+import { SUPABASE_CONFIG } from './config.js';
+import { authService } from './authServiceSupabase.js';
 
-const getAuthToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.comments;
 
-// 🔹 Obtener comentarios/tareas por documento
+async function callEdgeFunction(action, data = {}) {
+  const token = authService.getToken();
+  
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    },
+    body: JSON.stringify({ action, data })
+  });
+
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Unknown error');
+  }
+  
+  return result.data;
+}
+
 export async function apiGetCommentsByDocument(documentId) {
-  const token = getAuthToken();
-  if (!token) return { success: false, comments: [] };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/comments/document/${documentId}`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    if (response.ok && data) {
-      return { success: true, comments: Array.isArray(data) ? data : [] };
-    } else {
-      return { success: false, comments: [], error: data?.error };
-    }
-  } catch {
-    return { success: false, comments: [] };
+    const comments = await callEdgeFunction('get-by-document', { documentId });
+    return { success: true, comments: Array.isArray(comments) ? comments : [] };
+  } catch (error) {
+    console.error('Error getting comments:', error);
+    return { success: false, comments: [], error: error.message };
   }
 }
 
-// 🔹 Crear comentario/tarea
 export async function apiCreateComment(comment) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/comments`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(comment)
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, comment: data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    const newComment = await callEdgeFunction('create', comment);
+    return { success: true, comment: newComment };
+  } catch (error) {
+    console.error('Error creating comment:', error);
+    return { success: false, error: error.message };
   }
 }
 
-// 🔹 Editar comentario/tarea
 export async function apiEditComment(id, comment) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/comments/${id}`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(comment)
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, comment: data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    const updated = await callEdgeFunction('update', { id, ...comment });
+    return { success: true, comment: updated };
+  } catch (error) {
+    console.error('Error editing comment:', error);
+    return { success: false, error: error.message };
   }
 }
 
-// 🔹 Asignar usuarios a comentario/tarea
 export async function apiAssignUsersToComment(id, assignees) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/comments/${id}/assign`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(assignees)
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, comment: data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    const updated = await callEdgeFunction('assign', { id, assignees });
+    return { success: true, comment: updated };
+  } catch (error) {
+    console.error('Error assigning users:', error);
+    return { success: false, error: error.message };
   }
 }
 
-// 🔹 Eliminar comentario/tarea
 export async function apiDeleteComment(id) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/api/comments/${id}`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    return response.ok ? { success: true } : { success: false };
-  } catch {
-    return { success: false };
+    await callEdgeFunction('delete', { id });
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return { success: false, error: error.message };
   }
 }

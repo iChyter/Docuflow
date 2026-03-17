@@ -1,4 +1,7 @@
 //  Seguridad web
+import { SUPABASE_CONFIG } from './config.js';
+
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.auth;
 
 class SecurityService {
   constructor() {
@@ -552,13 +555,13 @@ class SecurityService {
 
   async reportSecurityIncident(event) {
     try {
-      await fetch('/api/security/incident', {
+      await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': this.csrfToken
-        },
-        body: JSON.stringify(event)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reportIncident',
+          data: event
+        })
       });
     } catch (error) {
       console.error('Error reporting security incident:', error);

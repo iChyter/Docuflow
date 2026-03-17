@@ -1,125 +1,139 @@
-import { BACKEND_URL } from './config.js';
+import { SUPABASE_CONFIG } from './config.js';
+import { supabase } from './supabaseClient.js';
+import { authService } from './authServiceSupabase.js';
 
-const getAuthToken = () => localStorage.getItem("authToken") || localStorage.getItem("token");
-// Eliminar archivo
+const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.files;
+
+async function callEdgeFunction(action, data = {}) {
+  const response = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, data })
+  });
+
+  const result = await response.json();
+  
+  if (!result.success) {
+    throw new Error(result.error || 'Unknown error');
+  }
+  
+  return result.data;
+}
+
+const getAuthToken = () => localStorage.getItem('docuflow_token');
+
 export async function apiDeleteFile(fileId) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/files/${fileId}`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, ...data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    await callEdgeFunction('delete', { id: fileId });
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return { success: false, error: error.message };
   }
 }
-// 🔹 Archivos (Files)
+
 export async function apiGetFiles() {
-  const token = getAuthToken();
-  if (!token) return { success: false, files: [] };
   try {
-    const response = await fetch(`${BACKEND_URL}/files`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    if (response.ok && data) {
-      return { success: true, files: Array.isArray(data) ? data : (data.files || []) };
-    } else {
-      return { success: false, files: [], error: data?.error };
-    }
-  } catch {
-    return { success: false, files: [] };
+    const files = await callEdgeFunction('list', { limit: 100, offset: 0 });
+    return { success: true, files: Array.isArray(files) ? files : [] };
+  } catch (error) {
+    console.error('Error getting files:', error);
+    return { success: false, files: [], error: error.message };
   }
 }
 
 export async function apiUploadFile(file, metadata = {}) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
-  const formData = new FormData();
-  formData.append("file", file);
-  Object.entries(metadata).forEach(([key, value]) => formData.append(key, value));
   try {
-    const response = await fetch(`${BACKEND_URL}/files`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}` },
-      body: formData
+    const user = authService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const fileName = `${Date.now()}_${file.name}`;
+    const filePath = `${user.id}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from(SUPABASE_CONFIG.bucket)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type
+      });
+
+    if (error) {
+      throw new Error(error.message || 'Upload failed');
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(SUPABASE_CONFIG.bucket)
+      .getPublicUrl(filePath);
+
+    const document = await callEdgeFunction('create', {
+      filename: file.name,
+      fileType: file.type,
+      filePath: publicUrl,
+      size: file.size,
+      ...metadata
     });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, ...data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+
+    return { success: true, ...document };
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return { success: false, error: error.message };
   }
 }
 
 export async function apiDownloadFile(fileId, newName) {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/files/${fileId}/download`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    if (!response.ok) return { success: false };
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
+    const doc = await callEdgeFunction('get', { id: fileId });
+    
+    const { data, error } = await supabase.storage
+      .from(SUPABASE_CONFIG.bucket)
+      .download(doc.file_path);
+
+    if (error) {
+      throw new Error(error.message || 'Download failed');
+    }
+
+    const url = window.URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = newName || 'archivo';
+    a.download = newName || doc.filename || 'archivo';
     document.body.appendChild(a);
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
     return { success: true };
-  } catch {
-    return { success: false };
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    return { success: false, error: error.message };
   }
 }
 
 export async function apiGetFileStats() {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/files/stats`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, ...data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    const stats = await callEdgeFunction('stats');
+    return { success: true, ...stats };
+  } catch (error) {
+    console.error('Error getting file stats:', error);
+    return { success: false, error: error.message };
   }
 }
 
 export async function apiGetFileCount() {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/files/count`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, ...data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    const count = await callEdgeFunction('count');
+    return { success: true, count };
+  } catch (error) {
+    console.error('Error getting file count:', error);
+    return { success: false, error: error.message };
   }
 }
 
 export async function apiGetFileTotalSize() {
-  const token = getAuthToken();
-  if (!token) return { success: false };
   try {
-    const response = await fetch(`${BACKEND_URL}/files/total-size`, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    const data = await response.json().catch(() => null);
-    return response.ok ? { success: true, ...data } : { success: false, error: data?.error };
-  } catch {
-    return { success: false };
+    const totalSize = await callEdgeFunction('total-size');
+    return { success: true, totalSize };
+  } catch (error) {
+    console.error('Error getting total size:', error);
+    return { success: false, error: error.message };
   }
 }

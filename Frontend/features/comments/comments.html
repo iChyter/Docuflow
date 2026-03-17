@@ -1,885 +1,207 @@
-<!DOCTYPE html><!DOCTYPE html><!DOCTYPE html><!DOCTYPE html>
-
+<!DOCTYPE html>
 <html lang="es">
-
-<head><html lang="es">
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"><head><html lang="es"><html lang="es">
-
-    <title>Comentarios y Tareas - DocuFlow</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">  <meta charset="UTF-8">
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
-    <link rel="stylesheet" href="../../shared/styles/styles.css">  <meta name="viewport" content="width=device-width, initial-scale=1.0"><head><head>
-
-    <link rel="stylesheet" href="comments.css">
-
-</head>  <title>DocuFlow - Comentarios y Tareas</title>
-
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuFlow - Comentarios y Tareas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="../../shared/styles/styles.css">
+  <style>
+    .comment-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 4px solid transparent;
+    }
+    .comment-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .comment-card.comment { border-left-color: #0d6efd; }
+    .comment-card.task { border-left-color: #198754; }
+    .comment-card.mention { border-left-color: #ffc107; }
+    .comment-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .task-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .filter-btn.active {
+      background-color: #0d6efd;
+      color: white;
+    }
+  </style>
+</head>
 <body>
-
-    <!-- Navbar -->  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">  <meta charset="UTF-8">  <meta charset="UTF-8">
-
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-
-        <div class="container-fluid">  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-            <a class="navbar-brand fw-bold" href="../dashboard/dashboard.html">
-
-                <i class="fas fa-file-alt me-2"></i>DocuFlow  <link rel="stylesheet" href="../../shared/styles/styles.css">  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center" href="../dashboard/dashboard.html">
+        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">
+        DocuFlow
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="../dashboard/dashboard.html">
+              <i class="bi bi-house-door me-1"></i>Dashboard
             </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">  <link rel="stylesheet" href="comments.css">
-
-                <span class="navbar-toggler-icon"></span>
-
-            </button></head>  <title>DocuFlow - Comentarios y Tareas</title>  <title>Comentarios y Tareas - DocuFlow</title>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-
-                <ul class="navbar-nav me-auto"><body>
-
-                    <li class="nav-item">
-
-                        <a class="nav-link" href="../dashboard/dashboard.html">  <!-- Navbar de navegación -->  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-
-                        </a>  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">
-
-                    </li>
-
-                    <li class="nav-item">    <div class="container-fluid">  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">  <link rel="stylesheet" href="../../shared/styles/styles.css">
-
-                        <a class="nav-link" href="../files/upload.html">
-
-                            <i class="fas fa-upload me-1"></i>Archivos      <a class="navbar-brand d-flex align-items-center" href="../dashboard/dashboard.html">
-
-                        </a>
-
-                    </li>        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">  <link rel="stylesheet" href="../../shared/styles/styles.css">  <link rel="stylesheet" href="comments.css">
-
-                    <li class="nav-item">
-
-                        <a class="nav-link active" href="comments.html">        DocuFlow
-
-                            <i class="fas fa-comments me-1"></i>Comentarios
-
-                        </a>      </a>  <link rel="stylesheet" href="comments.css">  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-                    </li>
-
-                    <li class="nav-item">      
-
-                        <a class="nav-link" href="../logs/logs.html">
-
-                            <i class="fas fa-list-alt me-1"></i>Logs      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"></head></head>
-
-                        </a>
-
-                    </li>        <span class="navbar-toggler-icon"></span>
-
-                    <li class="nav-item">
-
-                        <a class="nav-link" href="../permissions/permissions.html">      </button><body><body class="modern-body">
-
-                            <i class="fas fa-users-cog me-1"></i>Permisos
-
-                        </a>      
-
-                    </li>
-
-                </ul>      <div class="collapse navbar-collapse" id="navbarNav">  <!-- Navbar de navegación -->  <!-- Navbar será generado por JavaScript -->
-
-                <ul class="navbar-nav">
-
-                    <li class="nav-item dropdown">        <ul class="navbar-nav me-auto">
-
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-
-                            <i class="fas fa-user-circle me-1"></i>Admin          <li class="nav-item">  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">  <div id="navbar-container" class="container-fluid mt-4 mb-4"></div>
-
-                        </a>
-
-                        <ul class="dropdown-menu">            <a class="nav-link" href="../dashboard/dashboard.html">
-
-                            <li><a class="dropdown-item" href="../profile/profile.html">Perfil</a></li>
-
-                            <li><hr class="dropdown-divider"></li>              <i class="bi bi-house-door me-1"></i>Dashboard    <div class="container-fluid">
-
-                            <li><a class="dropdown-item" href="../auth/login.html">Cerrar Sesión</a></li>
-
-                        </ul>            </a>
-
-                    </li>
-
-                </ul>          </li>      <a class="navbar-brand d-flex align-items-center" href="../dashboard/dashboard.html">  <div class="comments-container">
-
-            </div>
-
-        </div>          <li class="nav-item">
-
-    </nav>
-
-            <a class="nav-link" href="../files/upload.html">        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">    <!-- Header Section -->
-
-    <div class="container-fluid mt-4">
-
-        <!-- Header con estadísticas -->              <i class="bi bi-cloud-upload me-1"></i>Subir Archivos
-
-        <div class="row mb-4">
-
-            <div class="col-12">            </a>        DocuFlow    <div class="card-modern comments-header">
-
-                <div class="d-flex justify-content-between align-items-center">
-
-                    <h2 class="mb-0">          </li>
-
-                        <i class="fas fa-comments text-primary me-2"></i>
-
-                        Comentarios y Tareas          <li class="nav-item">      </a>      <div class="d-flex align-items-center justify-content-between flex-wrap">
-
-                    </h2>
-
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCommentModal">            <a class="nav-link active" href="comments.html">
-
-                        <i class="fas fa-plus me-2"></i>Nuevo Comentario
-
-                    </button>              <i class="bi bi-chat-dots me-1"></i>Comentarios              <div class="d-flex align-items-center gap-3">
-
-                </div>
-
-            </div>            </a>
-
-        </div>
-
-          </li>      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">          <div class="header-icon">
-
-        <!-- Estadísticas -->
-
-        <div class="row mb-4">          <li class="nav-item">
-
-            <div class="col-md-3">
-
-                <div class="card bg-primary text-white">            <a class="nav-link" href="../logs/logs.html">        <span class="navbar-toggler-icon"></span>            <i class="bi bi-chat-dots-fill"></i>
-
-                    <div class="card-body">
-
-                        <div class="d-flex justify-content-between">              <i class="bi bi-journal-text me-1"></i>Logs
-
-                            <div>
-
-                                <h6 class="card-title">Total Comentarios</h6>            </a>      </button>          </div>
-
-                                <h3 class="mb-0" id="totalComments">0</h3>
-
-                            </div>          </li>
-
-                            <div class="align-self-center">
-
-                                <i class="fas fa-comments fa-2x opacity-75"></i>          <li class="nav-item">                <div>
-
-                            </div>
-
-                        </div>            <a class="nav-link" href="../permissions/permissions.html">
-
-                    </div>
-
-                </div>              <i class="bi bi-shield-check me-1"></i>Permisos      <div class="collapse navbar-collapse" id="navbarNav">            <h1 class="h3 mb-1 text-gray-800">Comentarios y Tareas</h1>
-
-            </div>
-
-            <div class="col-md-3">            </a>
-
-                <div class="card bg-warning text-white">
-
-                    <div class="card-body">          </li>        <ul class="navbar-nav me-auto">            <p class="mb-0 text-gray-600">Gestiona comentarios y organiza tareas del proyecto</p>
-
-                        <div class="d-flex justify-content-between">
-
-                            <div>          <li class="nav-item">
-
-                                <h6 class="card-title">Tareas Pendientes</h6>
-
-                                <h3 class="mb-0" id="pendingTasks">0</h3>            <a class="nav-link" href="../export/export.html">          <li class="nav-item">          </div>
-
-                            </div>
-
-                            <div class="align-self-center">              <i class="bi bi-download me-1"></i>Exportar
-
-                                <i class="fas fa-tasks fa-2x opacity-75"></i>
-
-                            </div>            </a>            <a class="nav-link" href="../dashboard/dashboard.html">        </div>
-
-                        </div>
-
-                    </div>          </li>
-
-                </div>
-
-            </div>        </ul>              <i class="bi bi-house-door me-1"></i>Dashboard        <div class="comments-stats d-flex">
-
-            <div class="col-md-3">
-
-                <div class="card bg-success text-white">        
-
-                    <div class="card-body">
-
-                        <div class="d-flex justify-content-between">        <ul class="navbar-nav">            </a>          <div class="stat-item text-info">
-
-                            <div>
-
-                                <h6 class="card-title">Tareas Completadas</h6>          <li class="nav-item dropdown">
-
-                                <h3 class="mb-0" id="completedTasks">0</h3>
-
-                            </div>            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">          </li>            <i class="bi bi-chat-text"></i>
-
-                            <div class="align-self-center">
-
-                                <i class="fas fa-check-circle fa-2x opacity-75"></i>              <i class="bi bi-person-circle me-1"></i>
-
-                            </div>
-
-                        </div>              <span id="nav-username">Usuario</span>          <li class="nav-item">            <span id="commentsCount">-</span>
-
-                    </div>
-
-                </div>            </a>
-
-            </div>
-
-            <div class="col-md-3">            <ul class="dropdown-menu dropdown-menu-end">            <a class="nav-link" href="../files/upload.html">            <small>Comentarios</small>
-
-                <div class="card bg-info text-white">
-
-                    <div class="card-body">              <li><a class="dropdown-item" href="../profile/profile.html">
-
-                        <div class="d-flex justify-content-between">
-
-                            <div>                <i class="bi bi-person me-2"></i>Mi Perfil              <i class="bi bi-cloud-upload me-1"></i>Subir Archivos          </div>
-
-                                <h6 class="card-title">Comentarios Hoy</h6>
-
-                                <h3 class="mb-0" id="todayComments">0</h3>              </a></li>
-
-                            </div>
-
-                            <div class="align-self-center">              <li><hr class="dropdown-divider"></li>            </a>          <div class="stat-item text-warning">
-
-                                <i class="fas fa-calendar-day fa-2x opacity-75"></i>
-
-                            </div>              <li><a class="dropdown-item" href="#" onclick="authService.logout()">
-
-                        </div>
-
-                    </div>                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión          </li>            <i class="bi bi-list-task"></i>
-
-                </div>
-
-            </div>              </a></li>
-
-        </div>
-
-            </ul>          <li class="nav-item">            <span id="tasksCount">-</span>
-
-        <!-- Lista de comentarios y tareas -->
-
-        <div class="row">          </li>
-
-            <div class="col-12">
-
-                <div class="card">        </ul>            <a class="nav-link active" href="comments.html">            <small>Tareas</small>
-
-                    <div class="card-header">
-
-                        <h5 class="card-title mb-0">      </div>
-
-                            <i class="fas fa-list me-2"></i>Lista de Comentarios y Tareas
-
-                        </h5>    </div>              <i class="bi bi-chat-dots me-1"></i>Comentarios          </div>
-
-                    </div>
-
-                    <div class="card-body p-0">  </nav>
-
-                        <div class="table-responsive">
-
-                            <table class="table table-hover mb-0">            </a>          <div class="stat-item text-success">
-
-                                <thead class="table-light">
-
-                                    <tr>  <div class="container-fluid mt-4">
-
-                                        <th>Tipo</th>
-
-                                        <th>Contenido</th>    <div class="row">          </li>            <i class="bi bi-check-circle"></i>
-
-                                        <th>Autor</th>
-
-                                        <th>Estado</th>      <!-- Panel principal de comentarios -->
-
-                                        <th>Fecha</th>
-
-                                        <th>Acciones</th>      <div class="col-lg-8">          <li class="nav-item">            <span id="completedCount">-</span>
-
-                                    </tr>
-
-                                </thead>        <div class="card shadow-sm">
-
-                                <tbody id="commentsTableBody">
-
-                                    <!-- Los comentarios se cargarán aquí dinámicamente -->          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">            <a class="nav-link" href="../logs/logs.html">            <small>Completadas</small>
-
-                                </tbody>
-
-                            </table>            <h5 class="mb-0">
-
-                        </div>
-
-                    </div>              <i class="bi bi-chat-dots me-2"></i>              <i class="bi bi-journal-text me-1"></i>Logs          </div>
-
-                </div>
-
-            </div>              Comentarios de Documentos
-
-        </div>
-
-    </div>            </h5>            </a>        </div>
-
-
-
-    <!-- Modal para nuevo comentario -->            <button class="btn btn-light btn-sm" onclick="refreshComments()">
-
-    <div class="modal fade" id="newCommentModal" tabindex="-1">
-
-        <div class="modal-dialog modal-lg">              <i class="bi bi-arrow-clockwise"></i>          </li>      </div>
-
-            <div class="modal-content">
-
-                <div class="modal-header">            </button>
-
-                    <h5 class="modal-title">
-
-                        <i class="fas fa-plus me-2"></i>Nuevo Comentario/Tarea          </div>          <li class="nav-item">    </div>
-
-                    </h5>
-
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>          <div class="card-body">
-
-                </div>
-
-                <div class="modal-body">            <!-- Formulario de nuevo comentario -->            <a class="nav-link" href="../permissions/permissions.html">
-
-                    <form id="commentForm">
-
-                        <div class="row">            <div class="card mb-4">
-
-                            <div class="col-md-6">
-
-                                <label class="form-label">Tipo</label>              <div class="card-header bg-light">              <i class="bi bi-shield-check me-1"></i>Permisos  <div class="row g-4">
-
-                                <select class="form-select" id="commentType" required>
-
-                                    <option value="">Seleccionar tipo</option>                <h6 class="mb-0">
-
-                                    <option value="comment">Comentario</option>
-
-                                    <option value="task">Tarea</option>                  <i class="bi bi-plus-circle me-2"></i>Agregar Comentario            </a>      <!-- Comments List Section -->
-
-                                    <option value="note">Nota</option>
-
-                                </select>                </h6>
-
-                            </div>
-
-                            <div class="col-md-6">              </div>          </li>      <div class="col-lg-8">
-
-                                <label class="form-label">Estado</label>
-
-                                <select class="form-select" id="commentStatus">              <div class="card-body">
-
-                                    <option value="pending">Pendiente</option>
-
-                                    <option value="in-progress">En Progreso</option>                <form id="comment-form">          <li class="nav-item">        <div class="card-modern comments-list">
-
-                                    <option value="completed">Completado</option>
-
-                                </select>                  <div class="row">
-
-                            </div>
-
-                        </div>                    <div class="col-md-6 mb-3">            <a class="nav-link" href="../export/export.html">          <div class="comments-list-header d-flex align-items-center justify-content-between flex-wrap">
-
-                        <div class="row mt-3">
-
-                            <div class="col-12">                      <label for="document-select" class="form-label">Documento</label>
-
-                                <label class="form-label">Título</label>
-
-                                <input type="text" class="form-control" id="commentTitle" placeholder="Título del comentario/tarea" required>                      <select class="form-select" id="document-select" required>              <i class="bi bi-download me-1"></i>Exportar            <h5 class="mb-0 text-gray-800">
-
-                            </div>
-
-                        </div>                        <option value="">Seleccionar documento...</option>
-
-                        <div class="row mt-3">
-
-                            <div class="col-12">                      </select>            </a>              <i class="bi bi-list-ul me-2"></i>Lista de Comentarios y Tareas
-
-                                <label class="form-label">Contenido</label>
-
-                                <textarea class="form-control" id="commentContent" rows="4" placeholder="Describe el comentario o tarea..." required></textarea>                    </div>
-
-                            </div>
-
-                        </div>                    <div class="col-md-6 mb-3">          </li>            </h5>
-
-                        <div class="row mt-3">
-
-                            <div class="col-md-6">                      <label for="comment-type" class="form-label">Tipo</label>
-
-                                <label class="form-label">Prioridad</label>
-
-                                <select class="form-select" id="commentPriority">                      <select class="form-select" id="comment-type">        </ul>            <div class="d-flex gap-2 align-items-center">
-
-                                    <option value="low">Baja</option>
-
-                                    <option value="medium" selected>Media</option>                        <option value="comment">Comentario</option>
-
-                                    <option value="high">Alta</option>
-
-                                    <option value="urgent">Urgente</option>                        <option value="suggestion">Sugerencia</option>                      <div class="filter-dropdown">
-
-                                </select>
-
-                            </div>                        <option value="question">Pregunta</option>
-
-                            <div class="col-md-6">
-
-                                <label class="form-label">Fecha límite (opcional)</label>                        <option value="issue">Problema</option>        <ul class="navbar-nav">                <select id="filterType" class="form-select form-select-sm">
-
-                                <input type="date" class="form-control" id="commentDueDate">
-
-                            </div>                      </select>
-
-                        </div>
-
-                    </form>                    </div>          <li class="nav-item dropdown">                  <option value="all">Todos</option>
-
-                </div>
-
-                <div class="modal-footer">                  </div>
-
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-
-                    <button type="button" class="btn btn-primary" id="saveCommentBtn">                  <div class="mb-3">            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">                  <option value="comments">Comentarios</option>
-
-                        <i class="fas fa-save me-2"></i>Guardar
-
-                    </button>                    <label for="comment-text" class="form-label">Comentario</label>
-
-                </div>
-
-            </div>                    <textarea class="form-control" id="comment-text" rows="3" placeholder="Escribe tu comentario aquí..." required></textarea>              <i class="bi bi-person-circle me-1"></i>                  <option value="tasks">Tareas</option>
-
-        </div>
-
-    </div>                  </div>
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>                  <button type="submit" class="btn btn-primary">              <span id="nav-username">Usuario</span>                  <option value="pending">Pendientes</option>
-
-    <script src="commentsController.js"></script>
-
-</body>                    <i class="bi bi-send me-1"></i>Enviar Comentario
-
-</html>
-                  </button>            </a>                  <option value="completed">Completadas</option>
-
-                </form>
-
-              </div>            <ul class="dropdown-menu dropdown-menu-end">                </select>
-
-            </div>
-
-              <li><a class="dropdown-item" href="../profile/profile.html">              </div>
-
-            <!-- Lista de comentarios -->
-
-            <div id="comments-container">                <i class="bi bi-person me-2"></i>Mi Perfil              <div class="search-box">
-
-              <div class="text-center py-4">
-
-                <div class="spinner-border text-primary" role="status">              </a></li>                <input type="text" class="form-control form-control-sm" id="searchComments" placeholder="Buscar...">
-
-                  <span class="visually-hidden">Cargando comentarios...</span>
-
-                </div>              <li><hr class="dropdown-divider"></li>              </div>
-
-                <p class="mt-2 text-muted">Cargando comentarios...</p>
-
-              </div>              <li><a class="dropdown-item" href="#" onclick="authService.logout()">            </div>
-
-            </div>
-
-          </div>                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión          </div>
-
-        </div>
-
-      </div>              </a></li>
-
-
-
-      <!-- Panel lateral -->            </ul>          <div class="comments-content">
-
-      <div class="col-lg-4">
-
-        <!-- Panel de tareas -->          </li>            <div id="commentsSection">
-
-        <div class="card shadow-sm mb-3">
-
-          <div class="card-header bg-success text-white">        </ul>              <!-- Comments will be rendered here -->
-
-            <h6 class="mb-0">
-
-              <i class="bi bi-list-task me-2"></i>      </div>            </div>
-
-              Tareas Pendientes
-
-            </h6>    </div>            <div id="commentsMsg" class="empty-state d-none">
-
-          </div>
-
-          <div class="card-body">  </nav>              <i class="bi bi-chat-dots display-1 text-gray-400"></i>
-
-            <!-- Formulario de nueva tarea -->
-
-            <div class="card mb-3">              <h5 class="text-gray-600 mt-3">No hay comentarios aún</h5>
-
-              <div class="card-header bg-light">
-
-                <h6 class="mb-0 small">Nueva Tarea</h6>  <div class="container mt-4">              <p class="text-gray-500">Los comentarios y tareas aparecerán aquí</p>
-
-              </div>
-
-              <div class="card-body">    <div class="row">            </div>
-
-                <form id="task-form">
-
-                  <div class="mb-2">      <!-- Panel de comentarios -->            
-
-                    <input type="text" class="form-control form-control-sm" id="task-title" placeholder="Título de la tarea..." required>
-
-                  </div>      <div class="col-lg-8">            <!-- Pagination -->
-
-                  <div class="mb-2">
-
-                    <textarea class="form-control form-control-sm" id="task-description" rows="2" placeholder="Descripción (opcional)"></textarea>        <div class="card">            <div class="d-flex align-items-center justify-content-between mt-4">
-
-                  </div>
-
-                  <div class="mb-2">          <div class="card-header d-flex justify-content-between align-items-center">              <div class="pagination-info text-gray-600 small">
-
-                    <select class="form-select form-select-sm" id="task-priority">
-
-                      <option value="low">Baja prioridad</option>            <h5 class="mb-0">                Mostrando <span id="showingCount">0</span> de <span id="totalCount">0</span> elementos
-
-                      <option value="medium" selected>Prioridad media</option>
-
-                      <option value="high">Alta prioridad</option>              <i class="bi bi-chat-dots text-primary me-2"></i>              </div>
-
-                    </select>
-
-                  </div>              Comentarios de Documentos              <div id="paginationContainer"></div>
-
-                  <button type="submit" class="btn btn-success btn-sm w-100">
-
-                    <i class="bi bi-plus me-1"></i>Agregar Tarea            </h5>            </div>
-
-                  </button>
-
-                </form>            <button class="btn btn-outline-primary btn-sm" onclick="refreshComments()">          </div>
-
-              </div>
-
-            </div>              <i class="bi bi-arrow-clockwise me-1"></i>Actualizar        </div>
-
-
-
-            <!-- Lista de tareas -->            </button>      </div>
-
-            <div id="tasks-container">
-
-              <div class="text-center">          </div>
-
-                <div class="spinner-border spinner-border-sm text-success" role="status">
-
-                  <span class="visually-hidden">Cargando tareas...</span>          <div class="card-body">      <!-- Add Comment Section -->
-
-                </div>
-
-                <p class="mt-2 text-muted small">Cargando tareas...</p>            <!-- Formulario de nuevo comentario -->      <div class="col-lg-4">
-
-              </div>
-
-            </div>            <div class="mb-4">        <div class="card-modern add-comment-section sticky-top">
-
-          </div>
-
-        </div>              <h6>Agregar Comentario</h6>          <div class="add-comment-header">
-
-
-
-        <!-- Estadísticas -->              <form id="comment-form">            <h5 class="mb-0 text-gray-800">
-
-        <div class="card shadow-sm mb-3">
-
-          <div class="card-header bg-info text-white">                <div class="mb-3">              <i class="bi bi-plus-circle me-2"></i>Nuevo Comentario/Tarea
-
-            <h6 class="mb-0">
-
-              <i class="bi bi-graph-up me-2"></i>                  <label for="document-select" class="form-label">Documento</label>            </h5>
-
-              Estadísticas
-
-            </h6>                  <select class="form-select" id="document-select" required>          </div>
-
-          </div>
-
-          <div class="card-body">                    <option value="">Seleccionar documento...</option>          
-
-            <div class="row text-center">
-
-              <div class="col-6">                  </select>          <form id="newCommentForm">
-
-                <h4 class="text-primary" id="total-comments">89</h4>
-
-                <small class="text-muted">Comentarios</small>                </div>            <div class="mb-3">
-
-              </div>
-
-              <div class="col-6">                <div class="mb-3">              <label class="form-label text-gray-700">Tipo</label>
-
-                <h4 class="text-success" id="total-tasks">12</h4>
-
-                <small class="text-muted">Tareas</small>                  <label for="comment-text" class="form-label">Comentario</label>              <div class="comment-type-selector">
-
-              </div>
-
-            </div>                  <textarea class="form-control" id="comment-text" rows="3" placeholder="Escribe tu comentario aquí..." required></textarea>                <input type="radio" class="btn-check" name="commentType" id="typeComment" value="comment" checked>
-
-            <hr>
-
-            <div class="row text-center">                </div>                <label class="btn btn-outline-primary" for="typeComment">
-
-              <div class="col-6">
-
-                <h5 class="text-warning" id="pending-tasks">8</h5>                <button type="submit" class="btn btn-primary">                  <i class="bi bi-chat-text me-1"></i>Comentario
-
-                <small class="text-muted">Pendientes</small>
-
-              </div>                  <i class="bi bi-send me-1"></i>Enviar Comentario                </label>
-
-              <div class="col-6">
-
-                <h5 class="text-success" id="completed-tasks">4</h5>                </button>                
-
-                <small class="text-muted">Completadas</small>
-
-              </div>              </form>                <input type="radio" class="btn-check" name="commentType" id="typeTask" value="task">
-
-            </div>
-
-          </div>            </div>                <label class="btn btn-outline-warning" for="typeTask">
-
-        </div>
-
-                  <i class="bi bi-list-task me-1"></i>Tarea
-
-        <!-- Actividad reciente -->
-
-        <div class="card shadow-sm">            <hr>                </label>
-
-          <div class="card-header bg-warning text-dark">
-
-            <h6 class="mb-0">              </div>
-
-              <i class="bi bi-clock me-2"></i>
-
-              Actividad Reciente            <!-- Lista de comentarios -->            </div>
-
-            </h6>
-
-          </div>            <div id="comments-container">
-
-          <div class="card-body" id="recent-activity">
-
-            <div class="text-center">              <div class="text-center">            <div class="mb-3">
-
-              <div class="spinner-border spinner-border-sm text-warning" role="status">
-
-                <span class="visually-hidden">Cargando...</span>                <div class="spinner-border" role="status">              <label for="commentContent" class="form-label text-gray-700">Contenido</label>
-
-              </div>
-
-              <p class="mt-2 text-muted small">Cargando actividad...</p>                  <span class="visually-hidden">Cargando comentarios...</span>              <textarea id="commentContent" class="form-control" rows="4" 
-
-            </div>
-
-          </div>                </div>                      placeholder="Escribe tu comentario o describe la tarea..." required></textarea>
-
-        </div>
-
-      </div>                <p class="mt-2 text-muted">Cargando comentarios...</p>            </div>
-
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../files/upload.html">
+              <i class="bi bi-cloud-upload me-1"></i>Archivos
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="comments.html">
+              <i class="bi bi-chat-dots me-1"></i>Comentarios
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../logs/logs.html">
+              <i class="bi bi-journal-text me-1"></i>Logs
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="../permissions/permissions.html">
+              <i class="bi bi-shield-check me-1"></i>Permisos
+            </a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle me-1"></i>
+              <span id="nav-username">Usuario</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="../profile/profile.html">
+                <i class="bi bi-person me-2"></i>Mi Perfil
+              </a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" onclick="window.handleLogout()">
+                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+              </a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="bi bi-chat-dots me-2"></i>Comentarios y Tareas</h2>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#commentModal">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo Comentario
+      </button>
     </div>
 
-  </div>              </div>
-
-
-
-  <!-- Scripts -->            </div>            <div class="mb-3 task-fields d-none">
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script type="module" src="../../shared/utils/uiHelpers.js"></script>          </div>              <label for="assignees" class="form-label text-gray-700">Asignados</label>
-
-  <script type="module" src="commentsController.js"></script>
-
-</body>        </div>              <input type="text" id="assignees" class="form-control" 
-
-</html>
-      </div>                   placeholder="Usuarios asignados (separados por coma)">
-
-              <small class="form-text text-gray-500">Ej: juan@email.com, maria@email.com</small>
-
-      <!-- Panel de tareas -->            </div>
-
-      <div class="col-lg-4">
-
-        <div class="card">            <div class="mb-3 task-fields d-none">
-
-          <div class="card-header">              <label for="dueDate" class="form-label text-gray-700">Fecha límite</label>
-
-            <h5 class="mb-0">              <input type="datetime-local" id="dueDate" class="form-control">
-
-              <i class="bi bi-list-task text-success me-2"></i>            </div>
-
-              Tareas Pendientes
-
-            </h5>            <div class="mb-3 task-fields d-none">
-
-          </div>              <label for="priority" class="form-label text-gray-700">Prioridad</label>
-
-          <div class="card-body">              <select id="priority" class="form-select">
-
-            <!-- Formulario de nueva tarea -->                <option value="low">Baja</option>
-
-            <div class="mb-4">                <option value="medium" selected>Media</option>
-
-              <h6>Nueva Tarea</h6>                <option value="high">Alta</option>
-
-              <form id="task-form">                <option value="urgent">Urgente</option>
-
-                <div class="mb-3">              </select>
-
-                  <input type="text" class="form-control" id="task-title" placeholder="Título de la tarea..." required>            </div>
-
-                </div>
-
-                <div class="mb-3">            <div class="mb-3">
-
-                  <textarea class="form-control" id="task-description" rows="2" placeholder="Descripción (opcional)"></textarea>              <label for="documentId" class="form-label text-gray-700">ID de Documento</label>
-
-                </div>              <input type="number" id="documentId" class="form-control" 
-
-                <div class="mb-3">                   placeholder="ID del documento relacionado" required>
-
-                  <select class="form-select" id="task-priority">            </div>
-
-                    <option value="low">Baja prioridad</option>
-
-                    <option value="medium" selected>Prioridad media</option>            <button type="submit" class="btn-modern btn-modern-primary w-100" id="submitBtn">
-
-                    <option value="high">Alta prioridad</option>              <i class="bi bi-plus-circle me-2"></i>
-
-                  </select>              <span id="submitText">Agregar Comentario</span>
-
-                </div>            </button>
-
-                <button type="submit" class="btn btn-success btn-sm w-100">          </form>
-
-                  <i class="bi bi-plus me-1"></i>Agregar Tarea        </div>
-
-                </button>
-
-              </form>        <!-- Quick Actions -->
-
-            </div>        <div class="card-modern mt-3">
-
-          <h6 class="text-gray-700 mb-3">Acciones Rápidas</h6>
-
-            <hr>          <div class="quick-actions">
-
-            <button class="btn-modern btn-modern-outline w-100 mb-2" id="markAllRead">
-
-            <!-- Lista de tareas -->              <i class="bi bi-check2-all me-2"></i>Marcar todo como leído
-
-            <div id="tasks-container">            </button>
-
-              <div class="text-center">            <button class="btn-modern btn-modern-outline w-100 mb-2" id="exportComments">
-
-                <div class="spinner-border spinner-border-sm" role="status">              <i class="bi bi-download me-2"></i>Exportar comentarios
-
-                  <span class="visually-hidden">Cargando tareas...</span>            </button>
-
-                </div>            <button class="btn-modern btn-modern-outline w-100" id="refreshComments">
-
-                <p class="mt-2 text-muted small">Cargando tareas...</p>              <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
-
-              </div>            </button>
-
-            </div>          </div>
-
-          </div>        </div>
-
-        </div>      </div>
-
+    <!-- Filters -->
+    <div class="mb-4">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-outline-secondary filter-btn active" data-filter="all">
+          <i class="bi bi-grid me-1"></i>Todos
+        </button>
+        <button type="button" class="btn btn-outline-secondary filter-btn" data-filter="comment">
+          <i class="bi bi-chat me-1"></i>Comentarios
+        </button>
+        <button type="button" class="btn btn-outline-secondary filter-btn" data-filter="task">
+          <i class="bi bi-check2-square me-1"></i>Tareas
+        </button>
+      </div>
     </div>
 
-        <!-- Estadísticas -->  </div>
+    <!-- Search -->
+    <div class="mb-3">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" id="searchInput" class="form-control" placeholder="Buscar comentarios...">
+      </div>
+    </div>
 
-        <div class="card mt-3">
-
-          <div class="card-header">  <script type="module" src="commentsController.js"></script>
-
-            <h6 class="mb-0">  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-              <i class="bi bi-graph-up text-info me-2"></i></body>
-
-              Estadísticas</html>
-
-            </h6>
-          </div>
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card bg-primary text-white">
           <div class="card-body">
-            <div class="row text-center">
-              <div class="col-6">
-                <h4 class="text-primary" id="total-comments">0</h4>
-                <small class="text-muted">Comentarios</small>
-              </div>
-              <div class="col-6">
-                <h4 class="text-success" id="total-tasks">0</h4>
-                <small class="text-muted">Tareas</small>
+            <h5 class="card-title"><i class="bi bi-chat-dots me-2"></i>Total</h5>
+            <h2 id="totalComments">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-check2-square me-2"></i>Tareas Completadas</h5>
+            <h2 id="completedTasks">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-warning text-dark">
+          <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-clock me-2"></i>Pendientes</h5>
+            <h2 id="pendingTasks">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments List -->
+    <div id="commentsContainer" class="mb-4">
+      <div class="text-center text-muted p-4">
+        <i class="bi bi-chat-square-text" style="font-size: 3rem;"></i>
+        <p class="mt-2">No hay comentarios</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment Modal -->
+  <div class="modal fade" id="commentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-chat-dots me-2"></i>Nuevo Comentario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="commentForm">
+            <div class="mb-3">
+              <label class="form-label">Tipo</label>
+              <select class="form-select" id="commentType">
+                <option value="comment">Comentario</option>
+                <option value="task">Tarea</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contenido</label>
+              <textarea class="form-control" id="commentContent" rows="4" placeholder="Escribe tu comentario o tarea..." required></textarea>
+            </div>
+            <div class="mb-3" id="taskOptions" style="display: none;">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="markComplete">
+                <label class="form-check-label" for="markComplete">Marcar como completada</label>
               </div>
             </div>
-          </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="window.commentsController.saveComment()">
+            <i class="bi bi-check-lg me-1"></i>Guardar
+          </button>
         </div>
       </div>
     </div>
@@ -888,7 +210,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
-  <!-- Config global para Supabase -->
   <script>
     window.APP_CONFIG = {
       SUPABASE_URL: 'https://nlgcevktvqwgddibxsja.supabase.co',
@@ -897,11 +218,247 @@
     };
   </script>
   
-  <script type="module" src="../../shared/services/config.js"></script>
-  <script type="module" src="../../shared/services/supabaseClient.js"></script>
-  <script type="module" src="../../shared/services/authServiceSupabase.js"></script>
-  <script type="module" src="../../shared/services/commentServiceSupabase.js"></script>
-  <script type="module" src="../../shared/utils/uiHelpers.js"></script>
-  <script type="module" src="commentsControllerSimple.js"></script>
+  <script type="module">
+    import { commentService } from '../../shared/services/commentServiceSupabase.js';
+    import { authService } from '../../shared/services/authServiceSupabase.js';
+
+    class CommentsController {
+      constructor() {
+        this.comments = [];
+        this.filter = 'all';
+        this.init();
+      }
+
+      async init() {
+        console.log('=== Comments Controller Init ===');
+        
+        this.updateUserInfo();
+        await this.loadComments();
+        this.setupEventListeners();
+      }
+
+      async updateUserInfo() {
+        const user = await authService.getCurrentUser();
+        const usernameEl = document.getElementById('nav-username');
+        if (usernameEl && user) {
+          usernameEl.textContent = user.username || user.full_name || user.email;
+        }
+      }
+
+      async loadComments() {
+        try {
+          const result = await commentService.list(100);
+          this.comments = Array.isArray(result) ? result : [];
+          console.log('Comentarios cargados:', this.comments.length);
+        } catch (error) {
+          console.log('Error cargando comentarios:', error.message);
+          this.comments = [];
+        }
+        this.renderComments();
+        this.updateStats();
+      }
+
+      setupEventListeners() {
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            this.filter = e.target.dataset.filter;
+            this.renderComments();
+          });
+        });
+
+        // Search
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => this.filterComments(e.target.value));
+        }
+
+        // Comment type toggle
+        const commentType = document.getElementById('commentType');
+        const taskOptions = document.getElementById('taskOptions');
+        if (commentType && taskOptions) {
+          commentType.addEventListener('change', (e) => {
+            taskOptions.style.display = e.target.value === 'task' ? 'block' : 'none';
+          });
+        }
+      }
+
+      async saveComment() {
+        const content = document.getElementById('commentContent').value.trim();
+        const type = document.getElementById('commentType').value;
+        
+        if (!content) {
+          alert('Por favor escribe un comentario');
+          return;
+        }
+
+        try {
+          const user = await authService.getCurrentUser();
+          const isTask = type === 'task';
+          
+          await commentService.create(content, null, isTask, []);
+
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('commentModal'));
+          if (modal) modal.hide();
+
+          // Reset form
+          document.getElementById('commentContent').value = '';
+          document.getElementById('commentType').value = 'comment';
+          document.getElementById('taskOptions').style.display = 'none';
+
+          // Reload comments
+          await this.loadComments();
+          
+          alert('Comentario guardado correctamente');
+        } catch (error) {
+          console.error('Error saving comment:', error);
+          alert('Error al guardar: ' + error.message);
+        }
+      }
+
+      async toggleTaskComplete(commentId) {
+        const comment = this.comments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        try {
+          const completed = comment.completed ? false : true;
+          await commentService.complete(commentId, completed);
+          await this.loadComments();
+        } catch (error) {
+          console.error('Error toggling task:', error);
+          alert('Error al actualizar: ' + error.message);
+        }
+      }
+
+      async deleteComment(commentId) {
+        if (!confirm('¿Eliminar este comentario?')) return;
+        
+        try {
+          await commentService.delete(commentId);
+          await this.loadComments();
+        } catch (error) {
+          console.error('Error deleting comment:', error);
+          alert('Error al eliminar: ' + error.message);
+        }
+      }
+
+      filterComments(query) {
+        if (!query) {
+          this.renderComments();
+          return;
+        }
+        const filtered = this.comments.filter(c => 
+          c.content?.toLowerCase().includes(query.toLowerCase()) ||
+          c.author?.toLowerCase().includes(query.toLowerCase())
+        );
+        this.renderComments(filtered);
+      }
+
+      renderComments(comments = null) {
+        const container = document.getElementById('commentsContainer');
+        if (!container) return;
+
+        const displayComments = comments || this.comments.filter(c => {
+          if (this.filter === 'all') return true;
+          return c.type === this.filter;
+        });
+
+        if (displayComments.length === 0) {
+          container.innerHTML = `
+            <div class="text-center text-muted p-4">
+              <i class="bi bi-chat-square-text" style="font-size: 3rem;"></i>
+              <p class="mt-2">No hay comentarios</p>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = displayComments.map(comment => {
+          const typeClass = comment.type === 'task' ? 'task' : 'comment';
+          const isComplete = comment.completed ? 'completed' : '';
+          const author = comment.author || comment.profiles?.username || comment.profiles?.full_name || 'Usuario';
+          
+          return `
+            <div class="card comment-card ${typeClass} mb-3">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex align-items-center mb-2">
+                    <div class="comment-avatar bg-primary text-white me-2">
+                      ${this.getInitials(author)}
+                    </div>
+                    <div>
+                      <strong>${author}</strong>
+                      <small class="text-muted ms-2">${this.formatDate(comment.created_at)}</small>
+                    </div>
+                  </div>
+                  <div>
+                    ${comment.type === 'task' ? `
+                      <span class="badge bg-success task-badge ${isComplete}">
+                        ${comment.completed ? 'Completada' : 'Pendiente'}
+                      </span>
+                    ` : `
+                      <span class="badge bg-primary">Comentario</span>
+                    `}
+                  </div>
+                </div>
+                <p class="card-text mb-3 ${isComplete}" style="${isComplete ? 'text-decoration: line-through; opacity: 0.7;' : ''}">
+                  ${comment.content}
+                </p>
+                <div class="d-flex gap-2">
+                  ${comment.type === 'task' ? `
+                    <button class="btn btn-sm ${comment.completed ? 'btn-outline-secondary' : 'btn-outline-success'}" 
+                            onclick="window.commentsController.toggleTaskComplete(${comment.id})">
+                      <i class="bi ${comment.completed ? 'bi-arrow-counterclockwise' : 'bi-check2'}"></i>
+                      ${comment.completed ? 'Reabrir' : 'Completar'}
+                    </button>
+                  ` : ''}
+                  <button class="btn btn-sm btn-outline-danger" 
+                          onclick="window.commentsController.deleteComment(${comment.id})">
+                    <i class="bi bi-trash"></i> Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      updateStats() {
+        const total = this.comments.length;
+        const tasks = this.comments.filter(c => c.type === 'task');
+        const completed = tasks.filter(t => t.completed).length;
+        const pending = tasks.length - completed;
+
+        document.getElementById('totalComments').textContent = total;
+        document.getElementById('completedTasks').textContent = completed;
+        document.getElementById('pendingTasks').textContent = pending;
+      }
+
+      getInitials(name) {
+        if (!name) return 'U';
+        return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      }
+
+      formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-ES', { 
+          day: 'numeric', 
+          month: 'short', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      }
+    }
+
+    window.commentsController = new CommentsController();
+    
+    window.handleLogout = async function() {
+      await authService.logout();
+      window.location.href = '../auth/login.html';
+    };
+  </script>
 </body>
 </html>

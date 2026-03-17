@@ -1,33 +1,29 @@
-// apiClientSimple.js - Versión simplificada para funcionalidades básicas
-import { CONFIG } from './config.js';
+// apiClientSimple.js - Versión simplificada con Supabase
+import { SUPABASE_CONFIG } from './config.js';
+import { supabase } from './supabaseClient.js';
 
 class SimpleApiClient {
   constructor() {
-    this.baseUrl = CONFIG.API_ENDPOINTS.development;
-    
-    // Detectar entorno
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      this.baseUrl = CONFIG.API_ENDPOINTS.production;
-    }
+    this.baseUrl = SUPABASE_CONFIG.edgeFunctionUrl;
     
     this.defaultHeaders = {
       'Content-Type': 'application/json'
     };
   }
 
-  // Método principal de request
   async request(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
+    const token = localStorage.getItem('docuflow_token');
+    
     const config = {
-      headers: { ...this.defaultHeaders },
+      headers: { 
+        ...this.defaultHeaders,
+        ...options.headers,
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       ...options
     };
 
-    // Agregar token si existe
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    const url = `${this.baseUrl}${endpoint}`;
 
     try {
       const response = await fetch(url, config);
@@ -45,7 +41,6 @@ class SimpleApiClient {
     }
   }
 
-  // Métodos HTTP básicos
   async get(endpoint) {
     return this.request(endpoint, { method: 'GET' });
   }
@@ -68,10 +63,8 @@ class SimpleApiClient {
     return this.request(endpoint, { method: 'DELETE' });
   }
 
-  // Upload de archivos
   async upload(endpoint, formData) {
-    const url = `${this.baseUrl}${endpoint}`;
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('docuflow_token');
     
     const config = {
       method: 'POST',
@@ -79,10 +72,11 @@ class SimpleApiClient {
     };
 
     if (token) {
-      config.headers = { Authorization: `Bearer ${token}` };
+      config.headers = { 'Authorization': `Bearer ${token}` };
     }
 
     try {
+      const url = `${this.baseUrl}${endpoint}`;
       const response = await fetch(url, config);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
@@ -92,12 +86,10 @@ class SimpleApiClient {
     }
   }
 
-  // Respuestas de demostración simplificadas
   getDemoResponse(endpoint, options) {
     const method = options.method || 'GET';
     const body = options.body ? JSON.parse(options.body) : null;
 
-    // Autenticación
     if (endpoint === '/auth/login' && method === 'POST') {
       const { username, password } = body;
       const demoUsers = {
@@ -107,8 +99,8 @@ class SimpleApiClient {
 
       const user = demoUsers[username];
       if (user && user.password === password) {
-        localStorage.setItem('token', `demo-token-${Date.now()}`);
-        localStorage.setItem('user', JSON.stringify({
+        localStorage.setItem('docuflow_token', `demo-token-${Date.now()}`);
+        localStorage.setItem('docuflow_user', JSON.stringify({
           id: Date.now(),
           username,
           name: user.name,
@@ -128,7 +120,6 @@ class SimpleApiClient {
       }
     }
 
-    // Archivos
     if (endpoint.startsWith('/files')) {
       if (method === 'GET') {
         return {
@@ -157,7 +148,6 @@ class SimpleApiClient {
       }
     }
 
-    // Comentarios
     if (endpoint.startsWith('/comments')) {
       if (method === 'GET') {
         return {
@@ -187,7 +177,6 @@ class SimpleApiClient {
       }
     }
 
-    // Logs
     if (endpoint.startsWith('/logs')) {
       return {
         success: true,
@@ -212,7 +201,6 @@ class SimpleApiClient {
       };
     }
 
-    // Permisos
     if (endpoint.startsWith('/permissions')) {
       return {
         success: true,
@@ -226,7 +214,6 @@ class SimpleApiClient {
       };
     }
 
-    // Respuesta por defecto
     return { success: true, data: {} };
   }
 
@@ -247,22 +234,18 @@ class SimpleApiClient {
   }
 }
 
-// Instancia global
 const apiClient = new SimpleApiClient();
 
-// API específica de DocuFlow simplificada
 const docuFlowAPI = {
-  // Autenticación
   auth: {
     login: (credentials) => apiClient.post('/auth/login', credentials),
     logout: () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.removeItem('docuflow_token');
+      localStorage.removeItem('docuflow_user');
       return Promise.resolve({ success: true });
     }
   },
 
-  // Archivos
   files: {
     list: (filters = {}) => apiClient.get('/files'),
     upload: (formData) => apiClient.upload('/files/upload', formData),
@@ -271,7 +254,6 @@ const docuFlowAPI = {
     search: (query) => apiClient.get(`/files/search?q=${encodeURIComponent(query)}`)
   },
 
-  // Comentarios y tareas
   comments: {
     list: (fileId) => apiClient.get(`/comments?fileId=${fileId}`),
     create: (comment) => apiClient.post('/comments', comment),
@@ -279,13 +261,11 @@ const docuFlowAPI = {
     delete: (id) => apiClient.delete(`/comments/${id}`)
   },
 
-  // Logs
   logs: {
     list: (filters = {}) => apiClient.get('/logs'),
     create: (log) => apiClient.post('/logs', log)
   },
 
-  // Permisos
   permissions: {
     list: (fileId) => apiClient.get(`/permissions?fileId=${fileId}`),
     grant: (permission) => apiClient.post('/permissions', permission),

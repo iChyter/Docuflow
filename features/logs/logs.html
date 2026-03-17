@@ -1,681 +1,186 @@
-<!DOCTYPE html><!DOCTYPE html><!DOCTYPE html>
-
+<!DOCTYPE html>
 <html lang="es">
-
-<head><html lang="es"><html lang="es">
-
+<head>
   <meta charset="UTF-8">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><head><head>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DocuFlow - Logs del Sistema</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">  <meta charset="UTF-8">  <meta charset="UTF-8">
-
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-  <link rel="stylesheet" href="../../shared/styles/styles.css">  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="stylesheet" href="logs.css">
-
-</head>  <title>DocuFlow - Logs del Sistema</title>  <title>Logs del Sistema - DocuFlow</title>
-
+  <link rel="stylesheet" href="../../shared/styles/styles.css">
+  <style>
+    .log-entry {
+      transition: background-color 0.2s;
+      border-left: 4px solid transparent;
+    }
+    .log-entry:hover {
+      background-color: #f8f9fa;
+    }
+    .log-entry.success { border-left-color: #198754; }
+    .log-entry.error { border-left-color: #dc3545; }
+    .log-entry.warning { border-left-color: #ffc107; }
+    .log-entry.info { border-left-color: #0d6efd; }
+    .log-timestamp {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
 <body>
-
-  <!-- Navbar de navegación -->  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">
-
-    <div class="container-fluid">  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">  <link rel="stylesheet" href="../../shared/styles/styles.css">
-
+    <div class="container-fluid">
       <a class="navbar-brand d-flex align-items-center" href="../dashboard/dashboard.html">
-
-        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">  <link rel="stylesheet" href="../../shared/styles/styles.css">  <link rel="stylesheet" href="logs.css">
-
+        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">
         DocuFlow
-
-      </a>  <link rel="stylesheet" href="logs.css">  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-      
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"></head></head>
-
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
-
-      </button><body><body class="modern-body">
-
-      
-
-      <div class="collapse navbar-collapse" id="navbarNav">  <!-- Navbar de navegación -->  <!-- Navbar será generado por JavaScript -->
-
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
-
-          <li class="nav-item">  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">  <div id="navbar-container" class="container-fluid mt-4 mb-4"></div>
-
+          <li class="nav-item">
             <a class="nav-link" href="../dashboard/dashboard.html">
-
-              <i class="bi bi-house-door me-1"></i>Dashboard    <div class="container-fluid">
-
+              <i class="bi bi-house-door me-1"></i>Dashboard
             </a>
-
-          </li>      <a class="navbar-brand d-flex align-items-center" href="../dashboard/dashboard.html">  <div class="logs-container">
-
-          <li class="nav-item">
-
-            <a class="nav-link" href="../files/upload.html">        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">    <!-- Header Section -->
-
-              <i class="bi bi-cloud-upload me-1"></i>Subir Archivos
-
-            </a>        DocuFlow    <div class="card-modern logs-header">
-
           </li>
-
-          <li class="nav-item">      </a>      <div class="d-flex align-items-center justify-content-between flex-wrap">
-
+          <li class="nav-item">
+            <a class="nav-link" href="../files/upload.html">
+              <i class="bi bi-cloud-upload me-1"></i>Archivos
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="../comments/comments.html">
-
-              <i class="bi bi-chat-dots me-1"></i>Comentarios              <div class="d-flex align-items-center gap-3">
-
+              <i class="bi bi-chat-dots me-1"></i>Comentarios
             </a>
-
-          </li>      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">          <div class="header-icon">
-
+          </li>
           <li class="nav-item">
-
-            <a class="nav-link active" href="logs.html">        <span class="navbar-toggler-icon"></span>            <i class="bi bi-activity"></i>
-
+            <a class="nav-link active" href="logs.html">
               <i class="bi bi-journal-text me-1"></i>Logs
-
-            </a>      </button>          </div>
-
-          </li>
-
-          <li class="nav-item">                <div>
-
-            <a class="nav-link" href="../permissions/permissions.html">
-
-              <i class="bi bi-shield-check me-1"></i>Permisos      <div class="collapse navbar-collapse" id="navbarNav">            <h1 class="h3 mb-1 text-gray-800">Logs del Sistema</h1>
-
             </a>
-
-          </li>        <ul class="navbar-nav me-auto">            <p class="mb-0 text-gray-600">Monitoreo y seguimiento de actividades del sistema</p>
-
+          </li>
           <li class="nav-item">
-
-            <a class="nav-link" href="../export/export.html">          <li class="nav-item">          </div>
-
-              <i class="bi bi-download me-1"></i>Exportar
-
-            </a>            <a class="nav-link" href="../dashboard/dashboard.html">        </div>
-
-          </li>
-
-        </ul>              <i class="bi bi-house-door me-1"></i>Dashboard        <div class="logs-stats d-flex">
-
-        
-
-        <ul class="navbar-nav">            </a>          <div class="stat-item text-info">
-
-          <li class="nav-item dropdown">
-
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">          </li>            <i class="bi bi-clock-history"></i>
-
-              <i class="bi bi-person-circle me-1"></i>
-
-              <span id="nav-username">Usuario</span>          <li class="nav-item">            <span id="todayLogsCount">-</span>
-
+            <a class="nav-link" href="../permissions/permissions.html">
+              <i class="bi bi-shield-check me-1"></i>Permisos
             </a>
-
-            <ul class="dropdown-menu dropdown-menu-end">            <a class="nav-link" href="../files/upload.html">            <small>Hoy</small>
-
-              <li><a class="dropdown-item" href="../profile/profile.html">
-
-                <i class="bi bi-person me-2"></i>Mi Perfil              <i class="bi bi-cloud-upload me-1"></i>Subir Archivos          </div>
-
-              </a></li>
-
-              <li><hr class="dropdown-divider"></li>            </a>          <div class="stat-item text-warning">
-
-              <li><a class="dropdown-item" href="#" onclick="authService.logout()">
-
-                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión          </li>            <i class="bi bi-exclamation-triangle"></i>
-
-              </a></li>
-
-            </ul>          <li class="nav-item">            <span id="errorsCount">-</span>
-
           </li>
-
-        </ul>            <a class="nav-link" href="../comments/comments.html">            <small>Errores</small>
-
+          <li class="nav-item">
+            <a class="nav-link" href="../export/export.html">
+              <i class="bi bi-download me-1"></i>Exportar
+            </a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle me-1"></i>
+              <span id="nav-username">Usuario</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="../profile/profile.html">
+                <i class="bi bi-person me-2"></i>Mi Perfil
+              </a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" onclick="window.handleLogout()">
+                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+              </a></li>
+            </ul>
+          </li>
+        </ul>
       </div>
-
-    </div>              <i class="bi bi-chat-dots me-1"></i>Comentarios          </div>
-
+    </div>
   </nav>
 
-            </a>          <div class="stat-item text-success">
-
-  <div class="container-fluid mt-4">
-
-    <div class="row">          </li>            <i class="bi bi-check-circle"></i>
-
-      <!-- Panel principal de logs -->
-
-      <div class="col-lg-9">          <li class="nav-item">            <span id="successCount">-</span>
-
-        <div class="card shadow-sm">
-
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">            <a class="nav-link active" href="logs.html">            <small>Exitosos</small>
-
-            <h5 class="mb-0">
-
-              <i class="bi bi-journal-text me-2"></i>              <i class="bi bi-journal-text me-1"></i>Logs          </div>
-
-              Logs del Sistema
-
-            </h5>            </a>        </div>
-
-            <div class="d-flex gap-2">
-
-              <select class="form-select form-select-sm" id="logLevelFilter" style="width: auto;">          </li>      </div>
-
-                <option value="">Todos los niveles</option>
-
-                <option value="info">Info</option>          <li class="nav-item">    </div>
-
-                <option value="warning">Advertencia</option>
-
-                <option value="error">Error</option>            <a class="nav-link" href="../permissions/permissions.html">
-
-                <option value="success">Éxito</option>
-
-              </select>              <i class="bi bi-shield-check me-1"></i>Permisos  <div class="row g-4">
-
-              <button class="btn btn-light btn-sm" onclick="refreshLogs()">
-
-                <i class="bi bi-arrow-clockwise"></i>            </a>      <!-- Logs Table Section -->
-
-              </button>
-
-              <button class="btn btn-outline-light btn-sm" onclick="clearLogs()">          </li>      <div class="col-lg-9">
-
-                <i class="bi bi-trash"></i>
-
-              </button>          <li class="nav-item">        <div class="card-modern logs-table-section">
-
-            </div>
-
-          </div>            <a class="nav-link" href="../export/export.html">          <div class="logs-table-header d-flex align-items-center justify-content-between flex-wrap">
-
-          <div class="card-body">
-
-            <!-- Filtros adicionales -->              <i class="bi bi-download me-1"></i>Exportar            <h5 class="mb-0 text-gray-800">
-
-            <div class="row mb-3">
-
-              <div class="col-md-4">            </a>              <i class="bi bi-list-ul me-2"></i>Historial de Actividades
-
-                <div class="input-group input-group-sm">
-
-                  <span class="input-group-text"><i class="bi bi-search"></i></span>          </li>            </h5>
-
-                  <input type="text" class="form-control" id="searchLogs" placeholder="Buscar en logs...">
-
-                </div>        </ul>            <div class="d-flex gap-2 align-items-center">
-
-              </div>
-
-              <div class="col-md-4">                      <button class="btn-modern btn-modern-outline btn-sm" id="refreshLogs">
-
-                <select class="form-select form-select-sm" id="dateFilter">
-
-                  <option value="">Todas las fechas</option>        <ul class="navbar-nav">                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
-
-                  <option value="today">Hoy</option>
-
-                  <option value="yesterday">Ayer</option>          <li class="nav-item dropdown">              </button>
-
-                  <option value="week">Esta semana</option>
-
-                </select>            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">              <button class="btn-modern btn-modern-primary btn-sm" id="downloadLogs">
-
-              </div>
-
-              <div class="col-md-4">              <i class="bi bi-person-circle me-1"></i>                <i class="bi bi-download me-1"></i>Exportar
-
-                <select class="form-select form-select-sm" id="userFilter">
-
-                  <option value="">Todos los usuarios</option>              <span id="nav-username">Usuario</span>              </button>
-
-                  <option value="admin">Administrador</option>
-
-                  <option value="user">Usuario</option>            </a>            </div>
-
-                  <option value="system">Sistema</option>
-
-                </select>            <ul class="dropdown-menu dropdown-menu-end">          </div>
-
-              </div>
-
-            </div>              <li><a class="dropdown-item" href="../profile/profile.html">
-
-
-
-            <!-- Lista de logs -->                <i class="bi bi-person me-2"></i>Mi Perfil          <!-- Filters Section -->
-
-            <div id="logs-container" style="max-height: 500px; overflow-y: auto;">
-
-              <div class="text-center py-4">              </a></li>          <div class="logs-filters">
-
-                <div class="spinner-border text-primary" role="status">
-
-                  <span class="visually-hidden">Cargando logs...</span>              <li><hr class="dropdown-divider"></li>            <div class="row g-3">
-
-                </div>
-
-                <p class="mt-2 text-muted">Cargando logs del sistema...</p>              <li><a class="dropdown-item" href="#" onclick="authService.logout()">              <div class="col-md-3">
-
-              </div>
-
-            </div>                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión                <label class="form-label text-gray-700">Fecha</label>
-
-
-
-            <!-- Paginación -->              </a></li>                <div class="input-group">
-
-            <nav aria-label="Paginación de logs" class="mt-3">
-
-              <ul class="pagination pagination-sm justify-content-center" id="logs-pagination">            </ul>                  <input type="date" id="filterDate" class="form-control form-control-sm">
-
-                <!-- Generado dinámicamente -->
-
-              </ul>          </li>                  <button class="btn btn-outline-secondary btn-sm" type="button" id="clearDate">
-
-            </nav>
-
-          </div>        </ul>                    <i class="bi bi-x"></i>
-
-        </div>
-
-      </div>      </div>                  </button>
-
-
-
-      <!-- Panel lateral -->    </div>                </div>
-
-      <div class="col-lg-3">
-
-        <!-- Estadísticas de logs -->  </nav>              </div>
-
-        <div class="card shadow-sm mb-3">
-
-          <div class="card-header bg-info text-white">              <div class="col-md-3">
-
-            <h6 class="mb-0">
-
-              <i class="bi bi-graph-up me-2"></i>Estadísticas  <div class="container mt-4">                <label class="form-label text-gray-700">Usuario</label>
-
-            </h6>
-
-          </div>    <div class="row">                <div class="search-box">
-
-          <div class="card-body">
-
-            <div class="row text-center">      <div class="col-12">                  <input type="text" id="filterUser" class="form-control form-control-sm" placeholder="Buscar usuario...">
-
-              <div class="col-6 mb-3">
-
-                <div class="card border-info">        <div class="card">                </div>
-
-                  <div class="card-body p-2">
-
-                    <i class="bi bi-info-circle text-info fs-4"></i>          <div class="card-header d-flex justify-content-between align-items-center">              </div>
-
-                    <h5 class="mt-1 mb-0" id="info-count">245</h5>
-
-                    <small class="text-muted">Info</small>            <h5 class="mb-0">              <div class="col-md-3">
-
-                  </div>
-
-                </div>              <i class="bi bi-journal-text text-primary me-2"></i>                <label class="form-label text-gray-700">Acción</label>
-
-              </div>
-
-              <div class="col-6 mb-3">              Logs del Sistema                <select id="filterAction" class="form-select form-select-sm">
-
-                <div class="card border-warning">
-
-                  <div class="card-body p-2">            </h5>                  <option value="">Todas las acciones</option>
-
-                    <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
-
-                    <h5 class="mt-1 mb-0" id="warning-count">12</h5>            <div class="d-flex gap-2">                  <option value="login">Inicio de sesión</option>
-
-                    <small class="text-muted">Advertencias</small>
-
-                  </div>              <select class="form-select form-select-sm" id="logLevelFilter" style="width: auto;">                  <option value="upload">Subida de archivo</option>
-
-                </div>
-
-              </div>                <option value="">Todos los niveles</option>                  <option value="download">Descarga</option>
-
-              <div class="col-6">
-
-                <div class="card border-danger">                <option value="info">Info</option>                  <option value="delete">Eliminación</option>
-
-                  <div class="card-body p-2">
-
-                    <i class="bi bi-x-circle text-danger fs-4"></i>                <option value="warning">Advertencia</option>                  <option value="comment">Comentario</option>
-
-                    <h5 class="mt-1 mb-0" id="error-count">3</h5>
-
-                    <small class="text-muted">Errores</small>                <option value="error">Error</option>                  <option value="permission">Permisos</option>
-
-                  </div>
-
-                </div>                <option value="success">Éxito</option>                  <option value="error">Error del sistema</option>
-
-              </div>
-
-              <div class="col-6">              </select>                </select>
-
-                <div class="card border-success">
-
-                  <div class="card-body p-2">              <button class="btn btn-outline-primary btn-sm" onclick="refreshLogs()">              </div>
-
-                    <i class="bi bi-check-circle text-success fs-4"></i>
-
-                    <h5 class="mt-1 mb-0" id="success-count">98</h5>                <i class="bi bi-arrow-clockwise me-1"></i>Actualizar              <div class="col-md-3">
-
-                    <small class="text-muted">Éxitos</small>
-
-                  </div>              </button>                <label class="form-label text-gray-700">Nivel</label>
-
-                </div>
-
-              </div>              <button class="btn btn-outline-danger btn-sm" onclick="clearLogs()">                <select id="filterLevel" class="form-select form-select-sm">
-
-            </div>
-
-          </div>                <i class="bi bi-trash me-1"></i>Limpiar                  <option value="">Todos los niveles</option>
-
-        </div>
-
-              </button>                  <option value="info">Información</option>
-
-        <!-- Logs recientes -->
-
-        <div class="card shadow-sm mb-3">            </div>                  <option value="warning">Advertencia</option>
-
-          <div class="card-header bg-warning text-dark">
-
-            <h6 class="mb-0">          </div>                  <option value="error">Error</option>
-
-              <i class="bi bi-clock me-2"></i>Logs Recientes
-
-            </h6>          <div class="card-body">                  <option value="success">Éxito</option>
-
-          </div>
-
-          <div class="card-body" id="recent-logs">            <div id="logs-container">                </select>
-
-            <div class="text-center">
-
-              <div class="spinner-border spinner-border-sm text-warning" role="status">              <div class="text-center">              </div>
-
-                <span class="visually-hidden">Cargando...</span>
-
-              </div>                <div class="spinner-border" role="status">            </div>
-
-              <p class="mt-2 text-muted small">Cargando logs recientes...</p>
-
-            </div>                  <span class="visually-hidden">Cargando logs...</span>            <div class="filter-actions mt-3">
-
-          </div>
-
-        </div>                </div>              <button class="btn-modern btn-modern-outline btn-sm" id="clearAllFilters">
-
-
-
-        <!-- Alertas críticas -->                <p class="mt-2 text-muted">Cargando logs del sistema...</p>                <i class="bi bi-funnel me-1"></i>Limpiar Filtros
-
-        <div class="card shadow-sm">
-
-          <div class="card-header bg-danger text-white">              </div>              </button>
-
-            <h6 class="mb-0">
-
-              <i class="bi bi-exclamation-triangle me-2"></i>Alertas Críticas            </div>              <button class="btn-modern btn-modern-outline btn-sm" id="applyFilters">
-
-            </h6>
-
-          </div>          </div>                <i class="bi bi-search me-1"></i>Aplicar Filtros
-
-          <div class="card-body" id="critical-alerts">
-
-            <div class="alert alert-success alert-sm mb-0">        </div>              </button>
-
-              <i class="bi bi-check-circle me-2"></i>
-
-              <small>No hay alertas críticas</small>      </div>            </div>
-
-            </div>
-
-          </div>    </div>          </div>
-
-        </div>
-
-      </div>
-
+  <!-- Main Content -->
+  <div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="bi bi-journal-text me-2"></i>Logs del Sistema</h2>
+      <button class="btn btn-primary" onclick="window.logsController.exportLogs()">
+        <i class="bi bi-download me-1"></i>Exportar
+      </button>
     </div>
 
-  </div>    <!-- Estadísticas de logs -->          <!-- Logs Table -->
-
-
-
-  <!-- Scripts -->    <div class="row mt-4">          <div class="table-container">
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script type="module" src="../shared/utils/uiHelpers.js"></script>      <div class="col-md-3">            <div class="table-responsive">
-
-  <script type="module" src="logsController.js"></script>
-
-</body>        <div class="card text-center">              <table class="table" id="logsTable">
-
-</html>
-          <div class="card-body">                <thead>
-
-            <i class="bi bi-info-circle text-info fs-1"></i>                  <tr>
-
-            <h5 class="mt-2" id="info-count">0</h5>                    <th>
-
-            <p class="card-text text-muted">Info</p>                      <input type="checkbox" class="form-check-input" id="selectAllLogs">
-
-          </div>                    </th>
-
-        </div>                    <th>Fecha y Hora</th>
-
-      </div>                    <th>Nivel</th>
-
-      <div class="col-md-3">                    <th>Acción</th>
-
-        <div class="card text-center">                    <th>Usuario</th>
-
-          <div class="card-body">                    <th>Detalles</th>
-
-            <i class="bi bi-exclamation-triangle text-warning fs-1"></i>                    <th>IP</th>
-
-            <h5 class="mt-2" id="warning-count">0</h5>                    <th>Acciones</th>
-
-            <p class="card-text text-muted">Advertencias</p>                  </tr>
-
-          </div>                </thead>
-
-        </div>                <tbody id="logsTableBody">
-
-      </div>                  <!-- Logs will be rendered here -->
-
-      <div class="col-md-3">                </tbody>
-
-        <div class="card text-center">              </table>
-
-          <div class="card-body">            </div>
-
-            <i class="bi bi-x-circle text-danger fs-1"></i>
-
-            <h5 class="mt-2" id="error-count">0</h5>            <!-- Empty State -->
-
-            <p class="card-text text-muted">Errores</p>            <div id="logsEmptyState" class="empty-state d-none">
-
-          </div>              <i class="bi bi-activity display-1 text-gray-400"></i>
-
-        </div>              <h5 class="text-gray-600 mt-3">No hay logs disponibles</h5>
-
-      </div>              <p class="text-gray-500">Los logs de actividad aparecerán aquí</p>
-
-      <div class="col-md-3">            </div>
-
-        <div class="card text-center">
-
-          <div class="card-body">            <!-- Pagination -->
-
-            <i class="bi bi-check-circle text-success fs-1"></i>            <div class="d-flex align-items-center justify-content-between mt-4">
-
-            <h5 class="mt-2" id="success-count">0</h5>              <div class="pagination-info text-gray-600 small">
-
-            <p class="card-text text-muted">Éxitos</p>                Mostrando <span id="showingLogsCount">0</span> de <span id="totalLogsCount">0</span> registros
-
-          </div>              </div>
-
-        </div>              <div id="logsPaginationContainer"></div>
-
-      </div>            </div>
-
-    </div>          </div>
-
-  </div>        </div>
-
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-journal-text me-2"></i>Total Logs</h5>
+            <h2 id="totalLogs">0</h2>
+          </div>
+        </div>
       </div>
-
-  <!-- Scripts -->
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>      <!-- Log Details & Analytics -->
-
-  <script type="module" src="../shared/utils/uiHelpers.js"></script>      <div class="col-lg-3">
-
-  <script type="module" src="logsControllerSimple.js"></script>        <!-- Log Details Panel -->
-
-</body>        <div class="card-modern log-details sticky-top">
-
-</html>          <div class="details-header">
-            <h5 class="mb-0 text-gray-800">
-              <i class="bi bi-info-circle me-2"></i>Detalles del Log
-            </h5>
-          </div>
-          
-          <div id="logDetailsContent">
-            <div class="empty-details">
-              <i class="bi bi-mouse2 text-gray-400 mb-2"></i>
-              <p class="text-gray-500 small">Selecciona un log para ver los detalles</p>
-            </div>
-          </div>
-
-          <div id="logDetails" class="log-details-content d-none">
-            <div class="detail-item">
-              <label class="detail-label">ID:</label>
-              <span class="detail-value" id="detailId">-</span>
-            </div>
-            <div class="detail-item">
-              <label class="detail-label">Timestamp:</label>
-              <span class="detail-value" id="detailTimestamp">-</span>
-            </div>
-            <div class="detail-item">
-              <label class="detail-label">Usuario:</label>
-              <span class="detail-value" id="detailUser">-</span>
-            </div>
-            <div class="detail-item">
-              <label class="detail-label">IP:</label>
-              <span class="detail-value" id="detailIp">-</span>
-            </div>
-            <div class="detail-item">
-              <label class="detail-label">User Agent:</label>
-              <span class="detail-value small" id="detailUserAgent">-</span>
-            </div>
-            <div class="detail-item">
-              <label class="detail-label">Detalles:</label>
-              <div class="detail-value" id="detailMessage">-</div>
-            </div>
+      <div class="col-md-4">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-check-circle me-2"></i>Exitosos</h5>
+            <h2 id="successLogs">0</h2>
           </div>
         </div>
-
-        <!-- Quick Analytics -->
-        <div class="card-modern mt-3">
-          <h6 class="text-gray-700 mb-3">Análisis Rápido</h6>
-          <div class="analytics-grid">
-            <div class="analytics-item">
-              <div class="analytics-icon text-info">
-                <i class="bi bi-person-check"></i>
-              </div>
-              <div>
-                <div class="analytics-value" id="uniqueUsers">-</div>
-                <div class="analytics-label">Usuarios Únicos</div>
-              </div>
-            </div>
-            <div class="analytics-item">
-              <div class="analytics-icon text-success">
-                <i class="bi bi-arrow-up-circle"></i>
-              </div>
-              <div>
-                <div class="analytics-value" id="uploadsCount">-</div>
-                <div class="analytics-label">Subidas</div>
-              </div>
-            </div>
-            <div class="analytics-item">
-              <div class="analytics-icon text-warning">
-                <i class="bi bi-arrow-down-circle"></i>
-              </div>
-              <div>
-                <div class="analytics-value" id="downloadsCount">-</div>
-                <div class="analytics-label">Descargas</div>
-              </div>
-            </div>
-            <div class="analytics-item">
-              <div class="analytics-icon text-danger">
-                <i class="bi bi-exclamation-triangle"></i>
-              </div>
-              <div>
-                <div class="analytics-value" id="errorsToday">-</div>
-                <div class="analytics-label">Errores Hoy</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="card-modern mt-3">
-          <h6 class="text-gray-700 mb-3">Acciones Rápidas</h6>
-          <div class="quick-actions">
-            <button class="btn-modern btn-modern-outline w-100 mb-2" id="clearOldLogs">
-              <i class="bi bi-trash me-2"></i>Limpiar Logs Antiguos
-            </button>
-            <button class="btn-modern btn-modern-outline w-100 mb-2" id="exportAnalytics">
-              <i class="bi bi-bar-chart me-2"></i>Exportar Análisis
-            </button>
-            <button class="btn-modern btn-modern-outline w-100" id="systemHealth">
-              <i class="bi bi-heart-pulse me-2"></i>Estado del Sistema
-            </button>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-danger text-white">
+          <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-x-circle me-2"></i>Errores</h5>
+            <h2 id="errorLogs">0</h2>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Filters -->
+    <div class="mb-4">
+      <div class="row">
+        <div class="col-md-4">
+          <select class="form-select" id="actionFilter">
+            <option value="">Todas las acciones</option>
+            <option value="upload">Subidas</option>
+            <option value="download">Descargas</option>
+            <option value="delete">Eliminaciones</option>
+            <option value="login">Logins</option>
+            <option value="logout">Logouts</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select class="form-select" id="statusFilter">
+            <option value="">Todos los estados</option>
+            <option value="success">Exitoso</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-secondary" onclick="window.logsController.applyFilters()">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-3">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" id="searchInput" class="form-control" placeholder="Buscar logs...">
+      </div>
+    </div>
+
+    <!-- Logs List -->
+    <div id="logsContainer" class="mb-4">
+      <div class="text-center text-muted p-4">
+        <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
+        <p class="mt-2">No hay logs</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav>
+      <ul class="pagination justify-content-center" id="pagination"></ul>
+    </nav>
   </div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
-  <!-- Config global para Supabase -->
   <script>
     window.APP_CONFIG = {
       SUPABASE_URL: 'https://nlgcevktvqwgddibxsja.supabase.co',
@@ -684,11 +189,224 @@
     };
   </script>
   
-  <script type="module" src="../shared/services/config.js"></script>
-  <script type="module" src="../shared/services/supabaseClient.js"></script>
-  <script type="module" src="../shared/services/authServiceSupabase.js"></script>
-  <script type="module" src="../shared/services/logServiceSupabase.js"></script>
-  <script type="module" src="../shared/utils/uiHelpers.js"></script>
-  <script type="module" src="logsController.js"></script>
+  <script type="module">
+    import { logService } from '../../shared/services/logServiceSupabase.js';
+    import { authService } from '../../shared/services/authServiceSupabase.js';
+
+    class LogsController {
+      constructor() {
+        this.logs = [];
+        this.filteredLogs = [];
+        this.currentPage = 1;
+        this.perPage = 20;
+        this.init();
+      }
+
+      async init() {
+        console.log('=== Logs Controller Init ===');
+        
+        this.updateUserInfo();
+        await this.loadLogs();
+        this.setupEventListeners();
+      }
+
+      async updateUserInfo() {
+        const user = await authService.getCurrentUser();
+        const usernameEl = document.getElementById('nav-username');
+        if (usernameEl && user) {
+          usernameEl.textContent = user.username || user.full_name || user.email;
+        }
+      }
+
+      async loadLogs() {
+        try {
+          const result = await logService.list(100);
+          this.logs = Array.isArray(result) ? result : [];
+          this.filteredLogs = [...this.logs];
+          console.log('Logs cargados:', this.logs.length);
+        } catch (error) {
+          console.log('Error cargando logs:', error.message);
+          this.logs = [];
+          this.filteredLogs = [];
+        }
+        this.renderLogs();
+        this.updateStats();
+      }
+
+      setupEventListeners() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => this.searchLogs(e.target.value));
+        }
+
+        const actionFilter = document.getElementById('actionFilter');
+        if (actionFilter) {
+          actionFilter.addEventListener('change', () => this.applyFilters());
+        }
+
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+          statusFilter.addEventListener('change', () => this.applyFilters());
+        }
+      }
+
+      applyFilters() {
+        const action = document.getElementById('actionFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        
+        this.filteredLogs = this.logs.filter(log => {
+          if (action && !log.action?.toLowerCase().includes(action.toLowerCase())) {
+            return false;
+          }
+          if (status === 'success' && log.details?.toLowerCase().includes('error')) {
+            return false;
+          }
+          if (status === 'error' && !log.details?.toLowerCase().includes('error')) {
+            return false;
+          }
+          return true;
+        });
+        
+        this.currentPage = 1;
+        this.renderLogs();
+      }
+
+      searchLogs(query) {
+        if (!query) {
+          this.applyFilters();
+          return;
+        }
+        
+        const lowerQuery = query.toLowerCase();
+        const searched = this.filteredLogs.filter(log => 
+          log.action?.toLowerCase().includes(lowerQuery) ||
+          log.details?.toLowerCase().includes(lowerQuery) ||
+          log.user_email?.toLowerCase().includes(lowerQuery)
+        );
+        
+        this.renderLogs(searched);
+      }
+
+      renderLogs(logs = null) {
+        const container = document.getElementById('logsContainer');
+        if (!container) return;
+
+        const displayLogs = logs || this.filteredLogs;
+        
+        if (displayLogs.length === 0) {
+          container.innerHTML = `
+            <div class="text-center text-muted p-4">
+              <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
+              <p class="mt-2">No hay logs</p>
+            </div>`;
+          return;
+        }
+
+        const start = (this.currentPage - 1) * this.perPage;
+        const paginatedLogs = displayLogs.slice(start, start + this.perPage);
+
+        container.innerHTML = paginatedLogs.map(log => {
+          const logClass = log.details?.toLowerCase().includes('error') ? 'error' : 
+                          log.details?.toLowerCase().includes('success') ? 'success' : 'info';
+          const icon = logClass === 'error' ? 'bi-x-circle' : 
+                      logClass === 'success' ? 'bi-check-circle' : 'bi-info-circle';
+          
+          return `
+            <div class="card log-entry ${logClass} mb-2">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="d-flex align-items-center">
+                    <i class="bi ${icon} me-2 ${logClass === 'error' ? 'text-danger' : logClass === 'success' ? 'text-success' : 'text-primary'}"></i>
+                    <div>
+                      <strong>${log.action || 'Acción'}</strong>
+                      <small class="text-muted ms-2">${log.user_email || log.profiles?.username || 'Usuario'}</small>
+                    </div>
+                  </div>
+                  <small class="log-timestamp">${this.formatDate(log.created_at)}</small>
+                </div>
+                <p class="mb-0 mt-2 text-muted">${log.details || ''}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        this.renderPagination(displayLogs.length);
+      }
+
+      renderPagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / this.perPage);
+        const pagination = document.getElementById('pagination');
+        
+        if (!pagination) return;
+        
+        let html = '';
+        
+        if (totalPages > 1) {
+          html += `<li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="window.logsController.goToPage(${this.currentPage - 1})">Anterior</a>
+          </li>`;
+          
+          for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item ${this.currentPage === i ? 'active' : ''}">
+              <a class="page-link" href="#" onclick="window.logsController.goToPage(${i})">${i}</a>
+            </li>`;
+          }
+          
+          html += `<li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="window.logsController.goToPage(${this.currentPage + 1})">Siguiente</a>
+          </li>`;
+        }
+        
+        pagination.innerHTML = html;
+      }
+
+      goToPage(page) {
+        this.currentPage = page;
+        this.renderLogs();
+      }
+
+      updateStats() {
+        const total = this.logs.length;
+        const errors = this.logs.filter(l => l.details?.toLowerCase().includes('error')).length;
+        const success = total - errors;
+
+        document.getElementById('totalLogs').textContent = total;
+        document.getElementById('errorLogs').textContent = errors;
+        document.getElementById('successLogs').textContent = success;
+      }
+
+      formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-ES', { 
+          day: 'numeric', 
+          month: 'short', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+      }
+
+      exportLogs() {
+        const csv = this.filteredLogs.map(log => 
+          `${log.created_at},${log.action},${log.user_email || ''},${log.details || ''}`
+        ).join('\n');
+        
+        const blob = new Blob([`Fecha,Acción,Usuario,Detalles\n${csv}`], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `logs_${new Date().toISOString()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    window.logsController = new LogsController();
+    
+    window.handleLogout = async function() {
+      await authService.logout();
+      window.location.href = '../auth/login.html';
+    };
+  </script>
 </body>
 </html>

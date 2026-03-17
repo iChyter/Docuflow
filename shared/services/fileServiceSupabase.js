@@ -121,25 +121,41 @@ export const fileService = {
   },
 
   async download(id) {
-    const doc = await callEdgeFunction('get', { id })
-    
-    if (!doc?.file_path) {
-      throw new Error('File path not found')
+    try {
+      // Get document directly from database
+      const { data: doc, error: docError } = await supabase
+        .from('documents')
+        .select('filename, file_path')
+        .eq('id', id)
+        .single()
+      
+      if (docError || !doc) {
+        throw new Error(docError?.message || 'Documento no encontrado')
+      }
+
+      if (!doc.file_path) {
+        throw new Error('Ruta del archivo no encontrada')
+      }
+
+      // Extract path from URL
+      const pathParts = doc.file_path.split('/storage/v1/object/public/')
+      const filePath = pathParts[1] || doc.file_path
+      
+      // Download from Supabase Storage
+      const { data, error } = await supabase.storage
+        .from(SUPABASE_CONFIG.bucket)
+        .download(filePath)
+
+      if (error) {
+        console.error('Storage download error:', error)
+        throw new Error(error.message || 'Error al descargar')
+      }
+
+      return { blob: data, filename: doc.filename }
+    } catch (error) {
+      console.error('Download error:', error)
+      throw error
     }
-
-    // Extract path from URL
-    const pathParts = doc.file_path.split('/storage/v1/object/public/')
-    const filePath = pathParts[1] || doc.file_path
-    
-    const { data, error } = await supabase.storage
-      .from(SUPABASE_CONFIG.bucket)
-      .download(filePath)
-
-    if (error) {
-      throw new Error(error.message || 'Download failed')
-    }
-
-    return { blob: data, filename: doc.filename }
   },
 
   async getDownloadUrl(id) {

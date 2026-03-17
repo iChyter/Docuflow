@@ -9,92 +9,11 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- Left Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">D</div>
-        <span class="brand-name">DocuFlow</span>
-      </div>
-      
-      <div class="sidebar-search">
-        <div class="search-box">
-          <i class="bi bi-search"></i>
-          <input type="text" placeholder="Buscar...">
-        </div>
-      </div>
-      
-      <nav class="sidebar-nav">
-        <div class="nav-section">
-          <a href="../dashboard/dashboard.html" class="nav-item">
-            <i class="bi bi-house-door"></i>
-            <span>Inicio</span>
-          </a>
-          <a href="../files/upload.html" class="nav-item">
-            <i class="bi bi-folder"></i>
-            <span>Archivos</span>
-          </a>
-          <a href="../comments/comments.html" class="nav-item">
-            <i class="bi bi-chat-dots"></i>
-            <span>Comentarios</span>
-          </a>
-          <a href="../logs/logs.html" class="nav-item">
-            <i class="bi bi-journal-text"></i>
-            <span>Logs</span>
-          </a>
-        </div>
-        
-        <div class="nav-section">
-          <a href="../permissions/permissions.html" class="nav-item">
-            <i class="bi bi-people"></i>
-            <span>Usuarios</span>
-          </a>
-          <a href="./export.html" class="nav-item active">
-            <i class="bi bi-download"></i>
-            <span>Exportar</span>
-          </a>
-        </div>
-        
-        <div class="nav-section">
-          <a href="#" class="nav-item">
-            <i class="bi bi-gear"></i>
-            <span>Configuración</span>
-          </a>
-          <a href="#" class="nav-item">
-            <i class="bi bi-question-circle"></i>
-            <span>Ayuda</span>
-          </a>
-        </div>
-      </nav>
-      
-      <div class="sidebar-footer">
-        <div class="promo-box">
-          <p>Actualiza a Pro para acceso ilimitado</p>
-          <div class="promo-actions">
-            <button class="btn-promo btn-promo-outline">Cerrar</button>
-            <button class="btn-promo btn-promo-primary">Go Pro</button>
-          </div>
-        </div>
-        
-        <div class="user-profile" onclick="window.handleLogout()">
-          <img src="https://ui-avatars.com/api/?name=Usuario&background=6366f1&color=fff" alt="User" class="user-avatar">
-          <div class="user-info">
-            <div class="user-name" id="user-name">Usuario</div>
-            <div class="user-role">Miembro</div>
-          </div>
-          <i class="bi bi-box-arrow-right" style="color: var(--text-muted);"></i>
-        </div>
-      </div>
-    </aside>
+    <!-- Sidebar Container - Componente Compartido -->
+    <aside class="sidebar" id="sidebar-container"></aside>
 
     <!-- Main Content -->
     <main class="main-content">
-      <header class="header">
-        <div class="breadcrumb">
-          <a href="../dashboard/dashboard.html">Dashboard</a>
-          <i class="bi bi-chevron-right"></i>
-          <span>Exportar</span>
-        </div>
-      </header>
 
       <div class="content">
         <!-- Export Options -->
@@ -146,7 +65,7 @@
     </main>
 
     <!-- Right Sidebar -->
-    <aside class="right-sidebar">
+    <aside class="right-sidebar" id="right-sidebar-container">
       <div class="sidebar-section">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Opciones de Exportación</span>
@@ -197,25 +116,26 @@
     };
   </script>
   
+  <!-- Sidebar Component -->
+  <script type="module" src="../../shared/components/sidebar.js"></script>
+  <script type="module" src="../../shared/components/rightSidebar.js"></script>
+  
   <script type="module">
     import { authService } from '../../shared/services/authServiceSupabase.js';
 
     class ExportController {
       constructor() {
         this.exportHistory = JSON.parse(localStorage.getItem('exportHistory') || '[]');
-        this.init();
+        this.loading = false;
       }
 
       async init() {
-        await this.loadUserInfo();
+        if (this.loading) return;
+        this.loading = true;
+        
         this.renderHistory();
-      }
-
-      async loadUserInfo() {
-        const user = await authService.getCurrentUser();
-        if (user) {
-          document.getElementById('user-name').textContent = user.username || user.email || 'Usuario';
-        }
+        
+        this.loading = false;
       }
 
       renderHistory() {
@@ -286,16 +206,16 @@
       }
     }
 
-    window.exportController = new ExportController();
+    // Initialize controller
+    const exportController = new ExportController();
+    window.exportController = exportController;
     
     window.exportPDF = () => window.exportController.exportPDF();
     window.exportExcel = () => window.exportController.exportExcel();
     window.exportCSV = () => window.exportController.exportCSV();
     
-    window.handleLogout = async function() {
-      await authService.logout();
-      window.location.href = '../auth/login.html';
-    };
+    // Initialize immediately
+    exportController.init();
   </script>
 </body>
 </html>

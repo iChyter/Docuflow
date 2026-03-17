@@ -59,5 +59,55 @@ export const userService = {
 
   async getRoles() {
     return await callEdgeFunction('get-roles')
+  },
+
+  async setUserRole(userId, role) {
+    // Try Edge Function first
+    try {
+      return await this.updateUser(userId, { role });
+    } catch (error) {
+      console.log('Edge Function failed, trying direct update');
+      // Fallback: direct update
+      const { supabase } = await import('./supabaseClient.js');
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', userId)
+        .select()
+        .single();
+      
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+      
+      return data;
+    }
+  },
+
+  async createUser(email, password) {
+    // Importar supabase client
+    const { supabase } = await import('./supabaseClient.js');
+    
+    try {
+      // Crear usuario solo en Auth (sin confirmación de email)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error('No se pudo crear el usuario');
+      }
+
+      console.log('Usuario creado en Auth:', authData.user.id);
+      return authData.user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   }
 }

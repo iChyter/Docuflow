@@ -149,6 +149,48 @@ Deno.serve(async (req) => {
         break
       }
 
+      case 'create-user': {
+        if (!user) throw new Error('Unauthorized')
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        if (profile?.role !== 'admin') throw new Error('Forbidden')
+        
+        // Create user with Supabase Auth Admin API
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: data.email,
+          password: data.password,
+          email_confirm: data.email_confirm ?? true,
+          user_metadata: { role: data.role }
+        })
+        
+        if (createError) throw new Error(createError.message)
+        
+        // Create profile entry
+        const { data: newProfile, error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: newUser.user.id,
+            email: data.email,
+            role: data.role,
+            username: data.email.split('@')[0]
+          }])
+          .select()
+          .single()
+        
+        if (profileError) {
+          // Rollback: delete the auth user if profile creation fails
+          await supabase.auth.admin.deleteUser(newUser.user.id)
+          throw new Error(profileError.message)
+        }
+        
+        result = newProfile
+        break
+      }
+
       default:
         throw new Error('Invalid action')
     }

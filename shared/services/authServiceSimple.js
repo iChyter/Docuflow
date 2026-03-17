@@ -116,10 +116,12 @@ class SimpleAuthService {
     const user = this.getCurrentUser();
     if (!user) return false;
     
-    const role = user.role || 'colaborador';
+    const role = user.role || 'usuario';
     
     switch (permission) {
       case 'upload_files':
+        return ['admin', 'colaborador'].includes(role);
+      case 'edit_files':
         return ['admin', 'colaborador'].includes(role);
       case 'delete_files':
         return ['admin'].includes(role);
@@ -128,7 +130,13 @@ class SimpleAuthService {
       case 'view_logs':
         return ['admin'].includes(role);
       case 'read_files':
-        return true;
+        return ['admin', 'colaborador', 'usuario'].includes(role);
+      case 'create_comments':
+        return ['admin', 'colaborador', 'usuario'].includes(role);
+      case 'edit_own_comments':
+        return ['admin', 'colaborador', 'usuario'].includes(role);
+      case 'delete_own_comments':
+        return ['admin', 'colaborador', 'usuario'].includes(role);
       default:
         return false;
     }
@@ -139,9 +147,19 @@ class SimpleAuthService {
     return user?.role === 'admin';
   }
 
-  isUser() {
+  isCollaborator() {
     const user = this.getCurrentUser();
     return user?.role === 'colaborador';
+  }
+
+  isUser() {
+    const user = this.getCurrentUser();
+    return user?.role === 'usuario';
+  }
+
+  getRole() {
+    const user = this.getCurrentUser();
+    return user?.role || 'usuario';
   }
 
   getToken() {

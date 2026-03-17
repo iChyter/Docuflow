@@ -149,12 +149,18 @@
         const email = this.user?.email || '-';
         const username = this.user?.user_metadata?.username || this.profile?.username || '';
         const fullname = this.user?.user_metadata?.full_name || this.profile?.full_name || '';
-        const role = this.profile?.role || 'colaborador';
+        const role = this.profile?.role || 'usuario';
+        
+        const roleLabels = {
+          'admin': 'Administrador',
+          'colaborador': 'Colaborador',
+          'usuario': 'Usuario'
+        };
         
         document.getElementById('user-email').textContent = email;
         document.getElementById('user-display-name').textContent = username || fullname || 'Usuario';
         document.getElementById('user-avatar').textContent = this.getInitials(username || fullname || 'Usuario');
-        document.getElementById('user-role').textContent = role === 'admin' ? 'Administrador' : 'Colaborador';
+        document.getElementById('user-role').textContent = roleLabels[role] || 'Usuario';
         
         // Form fields
         document.getElementById('username').value = username || '';

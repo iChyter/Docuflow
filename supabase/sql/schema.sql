@@ -14,7 +14,7 @@ create table public.profiles (
     id uuid references auth.users on delete cascade not null primary key,
     username text unique not null,
     full_name text,
-    role text default 'colaborador' check (role in ('admin', 'colaborador', 'viewer')) not null,
+    role text default 'usuario' check (role in ('admin', 'colaborador', 'usuario')) not null,
     avatar_url text,
     preferences jsonb default '{}'::jsonb,
     created_at timestamptz default now(),
@@ -124,8 +124,25 @@ create index idx_refresh_tokens_token on public.refresh_tokens(token);
 -- FUNCIONES UTILITARIAS
 -- =====================================================
 
--- Función para verificar el rol del usuario sin recursión
-create or replace function public.user_has_role(target_role text)
+-- Función para obtener el rol actual del usuario
+create or replace function public.get_current_user_role()
+returns text
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+begin
+    select role into user_role
+    from public.profiles
+    where id = auth.uid();
+    
+    return coalesce(user_role, 'usuario');
+end;
+$$;
+
+-- Función para verificar si el usuario puede editar documentos (admin o colaborador)
+create or replace function public.can_edit_documents()
 returns boolean
 language plpgsql
 security definer
@@ -133,41 +150,110 @@ as $$
 declare
     user_role text;
 begin
-    -- Usar auth.jwt() para evitar consultar profiles
-    user_role := coalesce((auth.jwt()->>'role'), 'viewer');
+    select role into user_role
+    from public.profiles
+    where id = auth.uid();
     
-    -- Si el rol del token JWT es admin, permitir
-    if user_role = 'admin' then
-        return true;
-    end if;
-    
-    -- Verificar con la tabla profiles solo si no es admin
-    if target_role = 'admin' then
-        return false; -- Solo admins del JWT pueden ser admins
-    end if;
-    
-    -- Verificar rol en profiles
-    return exists (
-        select 1 from public.profiles
-        where id = auth.uid() 
-        and role = target_role
-    );
+    return user_role in ('admin', 'colaborador');
 end;
 $$;
 
--- Función para verificar si es admin
-create or replace function public.is_admin()
+-- Función para verificar si el usuario puede gestionar usuarios (solo admin)
+create or replace function public.can_manage_users()
 returns boolean
 language plpgsql
 security definer
 as $$
+declare
+    user_role text;
 begin
-    return exists (
-        select 1 from public.profiles
-        where id = auth.uid() and role = 'admin'
-    );
+    select role into user_role
+    from public.profiles
+    where id = auth.uid();
+    
+    return user_role = 'admin';
 end;
 $$;
+
+-- Función para verificar si el usuario puede ver logs (solo admin)
+create or replace function public.can_view_logs()
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+begin
+    select role into user_role
+    from public.profiles
+    where id = auth.uid();
+    
+    return user_role = 'admin';
+end;
+$$;
+
+-- Función para verificar si el usuario puede eliminar documentos
+create or replace function public.can_delete_document(doc_uploaded_by uuid)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+    current_user_id uuid;
+begin
+    current_user_id := auth.uid();
+    
+    select role into user_role
+    from public.profiles
+    where id = current_user_id;
+    
+    -- admin puede eliminar cualquier documento
+    if user_role = 'admin' then
+        return true;
+    end if;
+    
+    -- colaborador puede eliminar sus propios documentos
+    if user_role = 'colaborador' and doc_uploaded_by = current_user_id then
+        return true;
+    end if;
+    
+    -- usuario no puede eliminar
+    return false;
+end;
+$$;
+
+-- Función para verificar si el usuario puede editar comentarios
+create or replace function public.can_edit_comment(comment_author_id uuid)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+    current_user_id uuid;
+begin
+    current_user_id := auth.uid();
+    
+    select role into user_role
+    from public.profiles
+    where id = current_user_id;
+    
+    -- admin puede editar cualquier comentario
+    if user_role = 'admin' then
+        return true;
+    end if;
+    
+    -- colaborador y usuario pueden editar sus propios comentarios
+    if comment_author_id = current_user_id then
+        return true;
+    end if;
+    
+    return false;
+end;
+$$;
+
+
 
 -- Función para actualizar updated_at automáticamente
 create or replace function update_updated_at_column()
@@ -214,15 +300,29 @@ create policy "Anyone can read profiles"
     on public.profiles for select
     using (true);
 
--- Solo el usuario puede actualizar su propio perfil
-create policy "Users can update own profile"
+-- Solo admin puede actualizar cualquier perfil (gestión de usuarios)
+-- Los usuarios pueden actualizar su propio perfil excepto el rol
+create policy "Admin can manage all profiles, users own profile"
     on public.profiles for update
-    using (auth.uid() = id);
+    using (
+        public.can_manage_users()
+        or 
+        (id = auth.uid())
+    );
 
--- El owner puede hacer lo que quiera con su propio perfil
-create policy "Users can manage own profile"
-    on public.profiles for all
-    using (auth.uid() = id);
+-- Solo admin puede crear perfiles manualmente
+create policy "Only admin can insert profiles"
+    on public.profiles for insert
+    with check (
+        public.can_manage_users()
+    );
+
+-- Solo admin puede eliminar perfiles
+create policy "Only admin can delete profiles"
+    on public.profiles for delete
+    using (
+        public.can_manage_users()
+    );
 
 -- =====================================================
 -- POLÍTICAS RLS - DOCUMENTS
@@ -236,23 +336,28 @@ create policy "Authenticated users can read documents"
         and is_deleted = false
     );
 
--- Colaboradores y admins pueden crear documentos
-create policy "Collaborators can create documents"
+-- Admin y colaborador pueden crear documentos
+create policy "Admin and collaborator can create documents"
     on public.documents for insert
-    with check (auth.role() = 'authenticated');
-
--- Dueño del documento puede actualizar
-create policy "Owner can update documents"
-    on public.documents for update
-    using (
-        uploaded_by = auth.uid()
+    with check (
+        auth.role() = 'authenticated'
+        and public.can_edit_documents()
     );
 
--- Dueño del documento puede eliminar
-create policy "Owner can delete documents"
+-- Admin puede actualizar cualquier documento, colaborador solo sus propios
+create policy "Admin can update any document, collaborator own documents"
+    on public.documents for update
+    using (
+        (public.get_current_user_role() = 'admin')
+        or 
+        (public.get_current_user_role() = 'colaborador' and uploaded_by = auth.uid())
+    );
+
+-- Solo admin y dueño (colaborador) pueden eliminar documentos
+create policy "Admin or owner can delete documents"
     on public.documents for delete
     using (
-        uploaded_by = auth.uid()
+        public.can_delete_document(uploaded_by)
     );
 
 -- =====================================================
@@ -264,40 +369,39 @@ create policy "Anyone can read comments"
     on public.comments for select
     using (true);
 
--- Usuarios autenticados pueden crear comentarios
-create policy "Authenticated can create comments"
+-- Usuarios autenticados pueden crear comentarios (todos los roles)
+create policy "Authenticated users can create comments"
     on public.comments for insert
-    with check (auth.role() = 'authenticated');
-
--- Autor puede actualizar
-create policy "Author can update comments"
-    on public.comments for update
-    using (
-        author_id = auth.uid()
+    with check (
+        auth.role() = 'authenticated'
     );
 
--- Autor puede eliminar
-create policy "Author can delete comments"
+-- Admin puede editar cualquier comentario, autor puede editar sus propios
+create policy "Admin or author can update comments"
+    on public.comments for update
+    using (
+        public.can_edit_comment(author_id)
+    );
+
+-- Admin puede eliminar cualquier comentario, autor puede eliminar sus propios
+create policy "Admin or author can delete comments"
     on public.comments for delete
     using (
-        author_id = auth.uid()
+        public.can_edit_comment(author_id)
     );
 
 -- =====================================================
 -- POLÍTICAS RLS - LOGS
 -- =====================================================
 
--- Solo admins pueden ver logs
-create policy "Admins can view logs"
+-- Solo admin puede ver logs
+create policy "Only admin can view logs"
     on public.logs for select
     using (
-        exists (
-            select 1 from public.profiles
-            where id = auth.uid() and role = 'admin'
-        )
+        public.can_view_logs()
     );
 
--- Sistema puede insertar logs (via function)
+-- Sistema puede insertar logs
 create policy "System can insert logs"
     on public.logs for insert
     with check (true);
@@ -306,38 +410,42 @@ create policy "System can insert logs"
 -- POLÍTICAS RLS - NOTIFICATIONS
 -- =====================================================
 
--- Usuarios ven sus propias notificaciones
-create policy "Users see own notifications"
+-- Usuarios ven sus propias notificaciones o globales
+create policy "Users see own or global notifications"
     on public.notifications for select
     using (
         user_id = auth.uid()
         or is_global = true
-        or auth.role() = 'authenticated'
     );
 
--- Usuarios pueden crear notificaciones globales o propias
-create policy "Users can create notifications"
+-- Solo admin puede crear notificaciones globales o para otros usuarios
+-- Los usuarios pueden crear notificaciones para sí mismos
+create policy "Admin can create any notification, users own"
     on public.notifications for insert
     with check (
-        is_global = true
-        or user_id = auth.uid()
-        or auth.role() = 'authenticated'
+        public.can_manage_users()
+        or 
+        user_id = auth.uid()
     );
 
--- Usuarios pueden actualizar sus notificaciones
-create policy "Users can update notifications"
+-- Solo admin puede actualizar cualquier notificación
+-- Usuarios pueden actualizar sus propias notificaciones
+create policy "Admin can update any notification, users own"
     on public.notifications for update
     using (
+        public.can_manage_users()
+        or 
         user_id = auth.uid()
-        or auth.role() = 'authenticated'
     );
 
--- Usuarios pueden eliminar sus notificaciones
-create policy "Users can delete notifications"
+-- Solo admin puede eliminar cualquier notificación
+-- Usuarios pueden eliminar sus propias notificaciones
+create policy "Admin can delete any notification, users own"
     on public.notifications for delete
     using (
+        public.can_manage_users()
+        or 
         user_id = auth.uid()
-        or auth.role() = 'authenticated'
     );
 
 -- =====================================================
@@ -465,6 +573,46 @@ begin
 end;
 $$;
 
+-- Buscar documentos con filtros de fecha
+create or replace function search_documents_with_filters(
+    search_query text default null,
+    start_date timestamptz default null,
+    end_date timestamptz default null,
+    limit_count int default 10
+)
+returns table (
+    id bigint,
+    filename text,
+    file_type text,
+    size bigint,
+    uploaded_by uuid,
+    uploaded_at timestamptz
+)
+language plpgsql
+security definer
+as $$
+begin
+    return query
+    select d.id, d.filename, d.file_type, d.size, d.uploaded_by, d.uploaded_at
+    from public.documents d
+    where d.is_deleted = false
+    and (
+        search_query is null 
+        or d.filename ilike '%' || search_query || '%'
+    )
+    and (
+        start_date is null 
+        or d.uploaded_at >= start_date
+    )
+    and (
+        end_date is null 
+        or d.uploaded_at <= end_date
+    )
+    order by d.uploaded_at desc
+    limit limit_count;
+end;
+$$;
+
 -- =====================================================
 -- TRIGGER: Crear perfil automáticamente al registrar usuario
 -- =====================================================
@@ -481,9 +629,9 @@ begin
         username_from_email := username_from_email || '_' || left(new.id::text, 8);
     end if;
 
-    -- Crear perfil
+    -- Crear perfil con rol 'usuario' por defecto (más restrictivo)
     insert into public.profiles (id, username, full_name, role)
-    values (new.id, username_from_email, new.raw_user_meta_data->>'full_name', 'colaborador');
+    values (new.id, username_from_email, new.raw_user_meta_data->>'full_name', 'usuario');
 
     return new;
 end;

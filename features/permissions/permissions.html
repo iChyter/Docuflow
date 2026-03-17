@@ -51,6 +51,17 @@
               </div>
             </div>
           </div>
+          <div class="card" style="padding: 24px; border-radius: 16px; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="width: 48px; height: 48px; background: var(--info); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-eye" style="color: white; font-size: 24px;"></i>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700;" id="usuario-count">0</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Usuarios</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Users List -->
@@ -85,7 +96,7 @@
           <select id="newRole" disabled style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
             <option value="admin">Administrador</option>
             <option value="colaborador">Colaborador</option>
-            <option value="guest">Invitado</option>
+            <option value="usuario">Usuario</option>
           </select>
           <button class="btn-primary" id="btn-save-role" disabled onclick="window.saveRole()">
             <i class="bi bi-check-lg"></i> Guardar Cambios
@@ -246,9 +257,21 @@
           return;
         }
 
+        const roleClasses = {
+          'admin': 'var(--danger)',
+          'colaborador': 'var(--success)',
+          'usuario': 'var(--info)'
+        };
+        
+        const roleLabels = {
+          'admin': 'Administrador',
+          'colaborador': 'Colaborador',
+          'usuario': 'Usuario'
+        };
+
         container.innerHTML = this.users.map(user => {
-          const roleClass = user.role === 'admin' ? 'var(--danger)' : user.role === 'colaborador' ? 'var(--success)' : 'var(--text-muted)';
-          const roleLabel = user.role === 'admin' ? 'Administrador' : user.role === 'colaborador' ? 'Colaborador' : 'Invitado';
+          const roleClass = roleClasses[user.role] || 'var(--text-muted)';
+          const roleLabel = roleLabels[user.role] || 'Usuario';
           const displayName = user.username || user.full_name || 'Usuario';
           
           return `
@@ -313,9 +336,11 @@
         const total = this.users.length;
         const admins = this.users.filter(u => u.role === 'admin').length;
         const cols = this.users.filter(u => u.role === 'colaborador').length;
+        const usuarios = this.users.filter(u => u.role === 'usuario').length;
 
         document.getElementById('total-users').textContent = total;
         document.getElementById('admin-count').textContent = admins;
+        document.getElementById('usuario-count').textContent = usuarios;
         document.getElementById('colaborador-count').textContent = cols;
       }
 

@@ -16,42 +16,40 @@
 -- Habilitar RLS en storage.objects
 alter table storage.objects enable row level security;
 
--- Policy: Anyone can view files
-create policy "Anyone can view files"
-    on storage.objects for select
-    using (
+-- Policy: Todos pueden ver archivos
+CREATE POLICY "Anyone can view files"
+    ON storage.objects FOR SELECT
+    USING (
         bucket_id = 'documents'
-        and (storage.foldername(name))[1] in (
-            select username from public.profiles where id = auth.uid()
+    );
+
+-- Policy: Admin y colaborador pueden subir archivos
+CREATE POLICY "Admin and collaborator can upload"
+    ON storage.objects FOR INSERT
+    WITH CHECK (
+        bucket_id = 'documents'
+        AND public.can_edit_documents()
+    );
+
+-- Policy: Admin puede actualizar cualquier archivo, colaborador solo sus propios
+CREATE POLICY "Admin can update any, collaborator own files"
+    ON storage.objects FOR UPDATE
+    USING (
+        bucket_id = 'documents'
+        AND (
+            public.get_current_user_role() = 'admin'
+            OR 
+            (public.get_current_user_role() = 'colaborador' 
+             AND (storage.foldername(name))[1] = (SELECT username FROM public.profiles WHERE id = auth.uid()))
         )
-        or exists (
-            select 1 from public.profiles
-            where id = auth.uid() and role = 'admin'
-        )
     );
 
--- Policy: Authenticated users can upload
-create policy "Authenticated users can upload"
-    on storage.objects for insert
-    with check (
+-- Policy: Solo admin puede eliminar archivos
+CREATE POLICY "Only admin can delete files"
+    ON storage.objects FOR DELETE
+    USING (
         bucket_id = 'documents'
-        and auth.role() = 'authenticated'
-    );
-
--- Policy: Owner or admin can update
-create policy "Owner or admin can update"
-    on storage.objects for update
-    using (
-        bucket_id = 'documents'
-        and auth.role() = 'authenticated'
-    );
-
--- Policy: Owner or admin can delete
-create policy "Owner or admin can delete"
-    on storage.objects for delete
-    using (
-        bucket_id = 'documents'
-        and auth.role() = 'authenticated'
+        AND public.get_current_user_role() = 'admin'
     );
 
 -- =====================================================
@@ -63,12 +61,24 @@ create policy "Owner or admin can delete"
 -- 2. Crear bucket "documents" si no existe
 -- 3. Crear políticas basadas en roles del perfil
 --
--- Políticas sugeridas:
+-- PERMISOS POR ROL:
 --
--- [Public] Anyone can view - bucket_id = 'documents'
--- [Insert] Authenticated users can upload - bucket_id = 'documents'  
--- [Update] Owner can update - bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid()
--- [Delete] Owner can delete - bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid()
+-- [ROL: admin]
+-- - SELECT: Puede ver todos los archivos
+-- - INSERT: Puede subir archivos
+-- - UPDATE: Puede actualizar cualquier archivo
+-- - DELETE: Puede eliminar cualquier archivo
 --
--- Para admin, crear políticas adicionales que permitan acceso total
+-- [ROL: colaborador]
+-- - SELECT: Puede ver todos los archivos
+-- - INSERT: Puede subir archivos
+-- - UPDATE: Solo puede actualizar sus propios archivos
+-- - DELETE: No puede eliminar archivos
+--
+-- [ROL: usuario]
+-- - SELECT: Puede ver todos los archivos
+-- - INSERT: NO puede subir archivos
+-- - UPDATE: NO puede actualizar archivos
+-- - DELETE: NO puede eliminar archivos
+--
 -- =====================================================

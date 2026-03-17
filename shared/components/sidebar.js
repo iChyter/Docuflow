@@ -171,7 +171,12 @@ class SidebarComponent {
   updateUserRole(role) {
     const roleEl = document.getElementById('sidebar-user-role');
     if (roleEl) {
-      roleEl.textContent = role === 'admin' ? 'Administrador' : 'Colaborador';
+      const roleLabels = {
+        'admin': 'Administrador',
+        'colaborador': 'Colaborador',
+        'usuario': 'Usuario'
+      };
+      roleEl.textContent = roleLabels[role] || 'Usuario';
     }
   }
 

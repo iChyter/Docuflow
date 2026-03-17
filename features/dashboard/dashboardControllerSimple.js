@@ -268,10 +268,16 @@ class SimpleDashboardController {
     if (!actionsContainer) return;
 
     const user = authService.getCurrentUser();
-    const userRole = user?.role || 'viewer';
+    const userRole = user?.role || 'usuario';
     const canUpload = userRole === 'admin' || userRole === 'colaborador';
     const canViewLogs = userRole === 'admin';
     const isAdmin = userRole === 'admin';
+    
+    const roleLabels = {
+      'admin': 'Administrador',
+      'colaborador': 'Colaborador',
+      'usuario': 'Usuario'
+    };
 
     actionsContainer.innerHTML = `
       <h5>Acciones Rápidas</h5>
@@ -313,13 +319,19 @@ class SimpleDashboardController {
   updateUI() {
     const user = authService.getCurrentUser();
     
+    const roleLabels = {
+      'admin': 'Administrador',
+      'colaborador': 'Colaborador',
+      'usuario': 'Usuario'
+    };
+    
     // Actualizar información del usuario
     const userInfo = document.getElementById('userInfo');
     if (userInfo && user) {
       userInfo.innerHTML = `
         <div class="user-welcome">
           <h4>Bienvenido, ${user.full_name || user.username}</h4>
-          <p class="text-muted">Rol: ${user.role}</p>
+          <p class="text-muted">Rol: ${roleLabels[user.role] || user.role}</p>
         </div>
       `;
     }

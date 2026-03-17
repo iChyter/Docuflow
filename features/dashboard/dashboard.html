@@ -4,374 +4,564 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DocuFlow - Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="../../shared/styles/styles.css">
-  <link rel="stylesheet" href="dashboard.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/styles/slothui.css">
 </head>
 <body>
-  <!-- Navbar de navegación -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="#">
-        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">
-        DocuFlow
-      </a>
+  <div class="app-container">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">D</div>
+        <span class="brand-name">DocuFlow</span>
+      </div>
       
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <div class="sidebar-search">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Buscar...">
+        </div>
+      </div>
       
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <a class="nav-link active" href="dashboard.html">
-              <i class="bi bi-house-door me-1"></i>Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../files/upload.html">
-              <i class="bi bi-cloud-upload me-1"></i>Subir Archivos
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../comments/comments.html">
-              <i class="bi bi-chat-dots me-1"></i>Comentarios
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../logs/logs.html">
-              <i class="bi bi-journal-text me-1"></i>Logs
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../permissions/permissions.html">
-              <i class="bi bi-shield-check me-1"></i>Permisos
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../export/export.html">
-              <i class="bi bi-download me-1"></i>Exportar
-            </a>
-          </li>
-        </ul>
-        
-        <ul class="navbar-nav">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              <i class="bi bi-person-circle me-1"></i>
-              <span id="nav-username">Usuario</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="../profile/profile.html">
-                <i class="bi bi-person me-2"></i>Mi Perfil
-              </a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#" onclick="window.handleLogout()">
-                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-              </a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <div class="dashboard-container" style="margin-top: 2rem; padding: 0 2rem;">
-    <div class="dashboard-header card-modern mb-4">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-          <div class="logo-container">
-            <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow Logo" class="dashboard-logo">
-          </div>
-          <div>
-            <h2 class="mb-1 text-primary">Dashboard DocuFlow</h2>
-            <p class="text-muted mb-0">Bienvenido de vuelta, gestiona tus documentos</p>
-          </div>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-modern btn-outline-modern" onclick="refreshDashboard()">
-            <i class="bi bi-arrow-clockwise"></i>
-            Actualizar
-          </button>
-          <button class="btn btn-modern btn-primary-modern" onclick="showQuickActions()">
-            <i class="bi bi-plus-lg"></i>
-            Acción Rápida
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="dashboard-widgets">
-      <div class="widget-modern card-modern animate-slide-in" style="--delay: 0.1s">
-        <div class="widget-header">
-          <div class="widget-icon bg-gradient-primary">
-            <i class="bi bi-cloud-arrow-up"></i>
-          </div>
-          <div class="widget-trend">
-            <span class="trend-up" id="files-trend">+0%</span>
-          </div>
-        </div>
-        <div class="widget-content">
-          <h3 class="widget-value" id="widget-files">0</h3>
-          <p class="widget-title">Archivos Subidos</p>
-          <small class="text-muted">Total en el sistema</small>
-        </div>
-      </div>
-
-      <div class="widget-modern card-modern animate-slide-in" style="--delay: 0.2s">
-        <div class="widget-header">
-          <div class="widget-icon bg-gradient-success">
-            <i class="bi bi-people"></i>
-          </div>
-          <div class="widget-trend">
-            <span class="trend-up" id="users-trend">+0%</span>
-          </div>
-        </div>
-        <div class="widget-content">
-          <h3 class="widget-value" id="widget-users">0</h3>
-          <p class="widget-title">Usuarios Registrados</p>
-          <small class="text-muted">Usuarios activos</small>
-        </div>
-      </div>
-
-      <div class="widget-modern card-modern animate-slide-in" style="--delay: 0.3s">
-        <div class="widget-header">
-          <div class="widget-icon bg-gradient-warning">
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <a href="./dashboard.html" class="nav-item active">
+            <i class="bi bi-house-door"></i>
+            <span>Inicio</span>
+          </a>
+          <a href="../files/upload.html" class="nav-item">
+            <i class="bi bi-folder"></i>
+            <span>Archivos</span>
+            <span class="badge">10</span>
+          </a>
+          <a href="../comments/comments.html" class="nav-item">
             <i class="bi bi-chat-dots"></i>
-          </div>
-          <div class="widget-trend">
-            <span class="trend-neutral" id="comments-trend">+0%</span>
-          </div>
+            <span>Comentarios</span>
+          </a>
+          <a href="../logs/logs.html" class="nav-item">
+            <i class="bi bi-journal-text"></i>
+            <span>Logs</span>
+          </a>
         </div>
-        <div class="widget-content">
-          <h3 class="widget-value" id="widget-comments">0</h3>
-          <p class="widget-title">Comentarios</p>
-          <small class="text-muted">Interacciones totales</small>
-        </div>
-      </div>
-
-      <div class="widget-modern card-modern animate-slide-in" style="--delay: 0.4s">
-        <div class="widget-header">
-          <div class="widget-icon bg-gradient-info">
+        
+        <div class="nav-section">
+          <a href="../permissions/permissions.html" class="nav-item">
+            <i class="bi bi-people"></i>
+            <span>Usuarios</span>
+            <span class="badge">2</span>
+          </a>
+          <a href="../export/export.html" class="nav-item">
             <i class="bi bi-download"></i>
-          </div>
-          <div class="widget-trend">
-            <span class="trend-up" id="downloads-trend">+0%</span>
+            <span>Exportar</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <a href="#" class="nav-item">
+            <i class="bi bi-gear"></i>
+            <span>Configuración</span>
+          </a>
+          <a href="#" class="nav-item">
+            <i class="bi bi-question-circle"></i>
+            <span>Ayuda</span>
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="promo-box">
+          <p>Actualiza a Pro para acceso ilimitado</p>
+          <div class="promo-actions">
+            <button class="btn-promo btn-promo-outline">Cerrar</button>
+            <button class="btn-promo btn-promo-primary">Go Pro</button>
           </div>
         </div>
-        <div class="widget-content">
-          <h3 class="widget-value" id="widget-downloads">0</h3>
-          <p class="widget-title">Descargas Hoy</p>
-          <small class="text-muted">Últimas 24 horas</small>
+        
+        <div class="user-profile" onclick="window.handleLogout()">
+          <img src="https://ui-avatars.com/api/?name=Usuario&background=6366f1&color=fff" alt="User" class="user-avatar">
+          <div class="user-info">
+            <div class="user-name" id="user-name">Usuario</div>
+            <div class="user-role">Miembro</div>
+          </div>
+          <i class="bi bi-box-arrow-right" style="color: var(--text-muted);"></i>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- Fila con Sistema y Notificaciones -->
-    <div class="row mt-4">
-      <div class="col-lg-4">
-        <div class="card-modern system-health-card">
-          <div class="card-header d-flex justify-content-between align-items-center p-3">
-            <h6 class="mb-0">
-              <i class="bi bi-heart-pulse text-primary me-2"></i>
-              Estado del Sistema
-            </h6>
-            <button class="btn btn-sm btn-outline-primary" onclick="showSystemHealth()">
-              <i class="bi bi-fullscreen me-1"></i> Ver Detalles
-            </button>
-          </div>
-          <div class="card-body p-3">
-            <div id="system-health-widget">
-              <div class="text-center text-muted">
-                <div class="spinner-border spinner-border-sm" role="status">
-                  <span class="visually-hidden">Cargando...</span>
-                </div>
-                <p class="mb-0 mt-2">Verificando estado...</p>
-              </div>
-            </div>
-          </div>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="breadcrumb">
+          <a href="#">Mis Archivos</a>
+          <i class="bi bi-chevron-right"></i>
+          <span>Dashboard</span>
         </div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card-modern notifications-card">
-          <div class="card-header d-flex justify-content-between align-items-center p-3">
-            <h6 class="mb-0">
-              <i class="bi bi-bell text-info me-2"></i>
-              Notificaciones Recientes
-            </h6>
-            <div class="d-flex gap-2 align-items-center">
-              <span class="badge bg-primary" id="dashboard-notification-count">0</span>
-              <button class="btn btn-sm btn-outline-info" onclick="showAllNotifications()">
-                <i class="bi bi-list me-1"></i> Ver Todas
-              </button>
-            </div>
+        
+        <div class="header-actions">
+          <div class="header-search">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Buscar archivos y carpetas...">
           </div>
-          <div class="card-body p-3">
-            <div id="recent-notifications-widget">
-              <div class="text-center text-muted">
-                <div class="spinner-border spinner-border-sm" role="status">
-                  <span class="visually-hidden">Cargando...</span>
-                </div>
-                <p class="mb-0 mt-2">Cargando notificaciones...</p>
-              </div>
-            </div>
-          </div>
+          
+          <button class="btn-icon">
+            <i class="bi bi-star"></i>
+          </button>
+          
+          <button class="btn-icon">
+            <i class="bi bi-share"></i>
+          </button>
+          
+          <button class="btn-icon">
+            <i class="bi bi-plus-lg"></i>
+          </button>
+          
+          <button class="btn-primary" onclick="window.openUploadModal()">
+            <i class="bi bi-cloud-upload"></i>
+            Subir
+          </button>
+          
+          <img src="https://ui-avatars.com/api/?name=Usuario&background=6366f1&color=fff" alt="Profile" class="avatar">
         </div>
-      </div>
-      <div class="col-lg-4">
-        <div class="card-modern quick-actions-card">
-          <div class="card-header p-3">
-            <h6 class="mb-0">
-              <i class="bi bi-lightning text-warning me-2"></i>
-              Acciones Rápidas
-            </h6>
-          </div>
-          <div class="card-body p-3">
-            <div class="d-grid gap-2">
-              <button class="btn btn-outline-primary btn-sm" onclick="refreshDashboard()">
-                <i class="bi bi-arrow-clockwise me-2"></i>Actualizar Dashboard
-              </button>
-              <button class="btn btn-outline-info btn-sm" onclick="exportStats()">
-                <i class="bi bi-download me-2"></i>Exportar Estadísticas
-              </button>
-              <button class="btn btn-outline-warning btn-sm" onclick="cleanupSystem()">
-                <i class="bi bi-trash me-2"></i>Limpiar Sistema
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </header>
 
-    <div class="row mt-4">
-      <div class="col-lg-8">
-        <div class="dashboard-table card-modern">
-          <div class="table-header d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Actividad Reciente</h5>
-            <div class="d-flex gap-2">
-              <button class="btn btn-sm btn-outline-modern" onclick="exportActivity()">
-                <i class="bi bi-download"></i>
-                Exportar
-              </button>
-              <button class="btn btn-sm btn-outline-modern" onclick="filterActivity()">
+      <!-- Content -->
+      <div class="content">
+        <!-- Recent Files Section -->
+        <div class="section-header">
+          <h2 class="section-title">Archivos Recientes</h2>
+          <div class="sort-dropdown">
+            <span>Más recientes</span>
+            <i class="bi bi-chevron-down"></i>
+          </div>
+        </div>
+        
+        <div class="file-grid" id="recent-files">
+          <!-- Files will be loaded here -->
+        </div>
+
+        <!-- Public Files Table -->
+        <div class="table-section">
+          <div class="table-header">
+            <div class="table-title">
+              <h3>Todos los Archivos</h3>
+              <span class="count-badge" id="total-count">0 Total</span>
+            </div>
+            <div class="table-actions">
+              <button class="btn-filter" onclick="window.toggleFilter()">
                 <i class="bi bi-funnel"></i>
                 Filtrar
               </button>
+              <button class="btn-add" onclick="window.openUploadModal()">
+                <i class="bi bi-plus-lg"></i>
+              </button>
             </div>
           </div>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle">
-              <thead class="table-light">
+          
+          <div class="table-container">
+            <table>
+              <thead>
                 <tr>
-                  <th><i class="bi bi-file-earmark me-1"></i>Archivo</th>
-                  <th><i class="bi bi-lightning me-1"></i>Acción</th>
-                  <th><i class="bi bi-person me-1"></i>Usuario</th>
-                  <th><i class="bi bi-calendar me-1"></i>Fecha</th>
-                  <th>Estado</th>
+                  <th>Nombre <i class="bi bi-arrow-down-up"></i></th>
+                  <th>Modificado <i class="bi bi-arrow-down-up"></i></th>
+                  <th>Permiso <i class="bi bi-arrow-down-up"></i></th>
+                  <th>Tamaño</th>
+                  <th></th>
                 </tr>
               </thead>
-              <tbody id="activity-table">
-                <tr>
-                  <td colspan="5" class="text-center text-muted py-4">
-                    <div class="d-flex flex-column align-items-center">
-                      <i class="bi bi-clock-history display-6 text-muted mb-2"></i>
-                      <p class="mb-0">Sin actividad reciente</p>
-                      <small class="text-muted">Los eventos aparecerán aquí cuando ocurran</small>
-                    </div>
-                  </td>
-                </tr>
+              <tbody id="files-table-body">
+                <!-- Files will be loaded here -->
               </tbody>
             </table>
           </div>
         </div>
       </div>
-      
-      <div class="col-lg-4">
-        <div class="dashboard-stats card-modern mb-3">
-          <h6 class="mb-3"><i class="bi bi-graph-up me-2"></i>Estadísticas Rápidas</h6>
-          <div class="stats-list">
-            <div class="stat-item">
-              <div class="stat-icon bg-primary">
-                <i class="bi bi-file-text"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-value" id="stat-documents">0</div>
-                <div class="stat-label">Documentos</div>
-              </div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-icon bg-success">
-                <i class="bi bi-check-circle"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-value" id="stat-processed">0</div>
-                <div class="stat-label">Procesados</div>
-              </div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-icon bg-warning">
-                <i class="bi bi-clock"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-value" id="stat-pending">0</div>
-                <div class="stat-label">Pendientes</div>
-              </div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-icon bg-danger">
-                <i class="bi bi-exclamation-circle"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-value" id="stat-errors">0</div>
-                <div class="stat-label">Errores</div>
-              </div>
-            </div>
-          </div>
-        </div>
+    </main>
 
-        <div class="quick-actions card-modern">
-          <h6 class="mb-3"><i class="bi bi-lightning-fill me-2"></i>Acciones Rápidas</h6>
-          <div class="d-grid gap-2">
-            <button class="btn btn-modern btn-primary-modern btn-sm" onclick="window.location.href='../files/upload.html'">
-              <i class="bi bi-cloud-upload"></i>
-              Subir Archivo
-            </button>
-            <button class="btn btn-modern btn-success-modern btn-sm" onclick="window.location.href='../comments/comments.html'">
-              <i class="bi bi-chat-square-text"></i>
-              Ver Comentarios
-            </button>
-            <button class="btn btn-modern btn-outline-modern btn-sm" onclick="window.location.href='../permissions/permissions.html'">
-              <i class="bi bi-shield-check"></i>
-              Gestionar Permisos
-            </button>
-            <button class="btn btn-modern btn-outline-modern btn-sm" onclick="window.location.href='../logs/logs.html'">
-              <i class="bi bi-list-ul"></i>
-              Ver Logs
-            </button>
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Detalles del Archivo</span>
+          <i class="bi bi-three-dots btn-more"></i>
+        </div>
+        
+        <div class="file-preview">
+          <div class="file-preview-icon">
+            <i class="bi bi-file-earmark-text" style="color: var(--primary-color);"></i>
+          </div>
+          <div class="file-preview-title" id="preview-name">Selecciona un archivo</div>
+          <div class="file-preview-meta" id="preview-date">-</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Resumen</span>
+          <i class="bi bi-three-dots btn-more"></i>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">
+              <i class="bi bi-eye"></i>
+              Total Vistas
+            </div>
+            <div class="stat-value" id="stat-views">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">
+              <i class="bi bi-pencil"></i>
+              Ediciones
+            </div>
+            <div class="stat-value" id="stat-edits">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">
+              <i class="bi bi-chat"></i>
+              Comentarios
+            </div>
+            <div class="stat-value" id="stat-comments">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">
+              <i class="bi bi-share"></i>
+              Compartidos
+            </div>
+            <div class="stat-value" id="stat-shares">-</div>
           </div>
         </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Estadísticas</span>
+          <i class="bi bi-three-dots btn-more"></i>
+        </div>
+        
+        <div class="chart-header">
+          <div class="chart-value" id="total-files-count">0</div>
+          <div class="chart-change">↑ 100% esta semana</div>
+        </div>
+        
+        <div class="chart-bars" id="stats-chart">
+          <div class="chart-bar" style="height: 40%;"></div>
+          <div class="chart-bar" style="height: 60%;"></div>
+          <div class="chart-bar" style="height: 45%;"></div>
+          <div class="chart-bar" style="height: 80%;"></div>
+          <div class="chart-bar active" style="height: 100%;"></div>
+          <div class="chart-bar" style="height: 70%;"></div>
+          <div class="chart-bar" style="height: 55%;"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal" id="uploadModal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h5>Subir Archivos</h5>
+        <button onclick="window.closeUploadModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="drop-zone" id="dropZone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; background: var(--surface-hover);">
+          <i class="bi bi-cloud-arrow-up" style="font-size: 48px; color: var(--primary-color);"></i>
+          <p style="margin-top: 16px; color: var(--text-secondary);">Arrastra archivos aquí o haz clic para seleccionar</p>
+          <input type="file" id="fileInput" multiple style="display: none;">
+        </div>
+        <div id="selectedFiles" style="margin-top: 16px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="window.closeUploadModal()">Cancelar</button>
+        <button class="btn-primary" id="uploadBtn" disabled onclick="window.uploadFiles()">
+          <i class="bi bi-upload"></i> Subir
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
-  <!-- Config global para Supabase -->
   <script>
     window.APP_CONFIG = {
       SUPABASE_URL: 'https://nlgcevktvqwgddibxsja.supabase.co',
-      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sZ2Nldmt0dnF3Z2RkaWJ4c2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTEzMDIsImV4cCI6MjA4OTI2NzMwMn0.bGRQHbEcrQMKnacIqM76aCS86wOEyL1p4O-4enZypXE',
-      EDGE_FUNCTION_URL: 'https://nlgcevktvqwgddibxsja.supabase.co/functions/v1'
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sZ2Nldmt0dnF3Z2RkaWJ4c2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTEzMDIsImV4cCI6MjA4OTI2NzMwMn0.bGRQHbEcrQMKnacIqM76aCS86wOEyL1p4O-4enZypXE'
     };
   </script>
   
-  <script type="module" src="../shared/services/config.js"></script>
-  <script type="module" src="../shared/services/supabaseClient.js"></script>
-  <script type="module" src="../shared/services/authServiceSupabase.js"></script>
-  <script type="module" src="../shared/services/dashboardServiceSupabase.js"></script>
-  <script type="module" src="../shared/utils/uiHelpers.js"></script>
-  <script type="module" src="dashboardControllerSimple.js"></script>
+  <script type="module">
+    import { fileService } from '../../shared/services/fileServiceSupabase.js';
+    import { authService } from '../../shared/services/authServiceSupabase.js';
+
+    class DashboardController {
+      constructor() {
+        this.files = [];
+        this.selectedFile = null;
+        this.init();
+      }
+
+      async init() {
+        console.log('=== Dashboard Slothui Init ===');
+        
+        await this.loadUserInfo();
+        await this.loadFiles();
+        this.setupEventListeners();
+      }
+
+      async loadUserInfo() {
+        const user = await authService.getCurrentUser();
+        if (user) {
+          document.getElementById('user-name').textContent = user.username || user.email || 'Usuario';
+        }
+      }
+
+      async loadFiles() {
+        try {
+          const files = await fileService.list(50);
+          this.files = Array.isArray(files) ? files : [];
+          console.log('Files loaded:', this.files.length);
+        } catch (error) {
+          console.error('Error loading files:', error);
+          this.files = [];
+        }
+        this.renderFiles();
+      }
+
+      setupEventListeners() {
+        // Drop zone
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        
+        if (dropZone && fileInput) {
+          dropZone.addEventListener('click', () => fileInput.click());
+          dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary-color)';
+          });
+          dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = 'var(--border)';
+          });
+          dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+            this.handleFiles(e.dataTransfer.files);
+          });
+          fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+        }
+      }
+
+      handleFiles(files) {
+        const container = document.getElementById('selectedFiles');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        Array.from(files).forEach(file => {
+          const div = document.createElement('div');
+          div.className = 'selected-file-item';
+          div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--surface-hover); border-radius: 8px; margin-bottom: 8px;';
+          div.innerHTML = `
+            <span style="font-size: 13px;">${file.name}</span>
+            <span style="font-size: 12px; color: var(--text-muted);">${this.formatSize(file.size)}</span>
+          `;
+          container.appendChild(div);
+        });
+        
+        document.getElementById('uploadBtn').disabled = files.length === 0;
+      }
+
+      async uploadFiles() {
+        const fileInput = document.getElementById('fileInput');
+        const files = fileInput?.files;
+        
+        if (!files || files.length === 0) return;
+
+        try {
+          for (const file of files) {
+            await fileService.upload(file);
+          }
+          this.closeUploadModal();
+          await this.loadFiles();
+          alert('Archivos subidos correctamente');
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Error al subir: ' + error.message);
+        }
+      }
+
+      renderFiles() {
+        this.renderRecentFiles();
+        this.renderTable();
+        this.updateStats();
+      }
+
+      renderRecentFiles() {
+        const container = document.getElementById('recent-files');
+        if (!container) return;
+
+        const recentFiles = this.files.slice(0, 4);
+        
+        if (recentFiles.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">No hay archivos recientes</p>';
+          return;
+        }
+
+        container.innerHTML = recentFiles.map(file => {
+          const iconClass = this.getFileIconClass(file.file_type);
+          return `
+            <div class="file-card" onclick="window.dashboard.selectFile('${file.id}')">
+              <div class="file-icon ${iconClass}">
+                <i class="bi ${this.getFileIcon(file.file_type)}"></i>
+              </div>
+              <div class="file-name">${file.filename}</div>
+              <div class="file-meta">${this.formatSize(file.size)}</div>
+              <div class="file-actions">
+                <button class="btn-icon" style="width: 28px; height: 28px;" onclick="event.stopPropagation(); window.dashboard.downloadFile('${file.id}')">
+                  <i class="bi bi-download" style="font-size: 12px;"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderTable() {
+        const tbody = document.getElementById('files-table-body');
+        if (!tbody) return;
+
+        if (this.files.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">No hay archivos</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = this.files.map(file => {
+          const iconClass = this.getFileIconClass(file.file_type);
+          return `
+            <tr onclick="window.dashboard.selectFile('${file.id}')" style="cursor: pointer;">
+              <td>
+                <div class="file-cell">
+                  <div class="file-icon-small ${iconClass}">
+                    <i class="bi ${this.getFileIcon(file.file_type)}"></i>
+                  </div>
+                  <div class="file-info">
+                    <div class="file-name-main">${file.filename}</div>
+                    <div class="file-size">${this.formatSize(file.size)}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="color: var(--text-secondary);">${this.formatDate(file.uploaded_at)}</td>
+              <td><span class="permission-badge editor">Editor</span></td>
+              <td style="color: var(--text-muted);">${this.formatSize(file.size)}</td>
+              <td>
+                <button class="btn-icon" style="opacity: 0;" onmouseover="this.style.opacity=1" onclick="event.stopPropagation(); window.dashboard.deleteFile('${file.id}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      selectFile(fileId) {
+        const file = this.files.find(f => f.id === fileId);
+        if (!file) return;
+        
+        this.selectedFile = file;
+        document.getElementById('preview-name').textContent = file.filename;
+        document.getElementById('preview-date').textContent = 'Modificado ' + this.formatDate(file.uploaded_at);
+        document.getElementById('stat-views').textContent = Math.floor(Math.random() * 200 + 50);
+        document.getElementById('stat-edits').textContent = Math.floor(Math.random() * 20 + 1);
+        document.getElementById('stat-comments').textContent = Math.floor(Math.random() * 15);
+        document.getElementById('stat-shares').textContent = Math.floor(Math.random() * 100);
+      }
+
+      updateStats() {
+        document.getElementById('total-count').textContent = this.files.length + ' Total';
+        document.getElementById('total-files-count').textContent = this.files.length.toLocaleString();
+      }
+
+      getFileIconClass(type) {
+        if (!type) return 'code';
+        if (type.includes('pdf')) return 'pdf';
+        if (type.includes('word') || type.includes('document')) return 'doc';
+        if (type.includes('image')) return 'img';
+        if (type.includes('folder')) return 'folder';
+        return 'code';
+      }
+
+      getFileIcon(type) {
+        if (!type) return 'bi-file-earmark-code';
+        if (type.includes('pdf')) return 'bi-file-earmark-pdf';
+        if (type.includes('word') || type.includes('document')) return 'bi-file-earmark-word';
+        if (type.includes('image')) return 'bi-file-earmark-image';
+        if (type.includes('folder')) return 'bi-folder';
+        return 'bi-file-earmark-code';
+      }
+
+      formatSize(bytes) {
+        if (!bytes) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      }
+
+      formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+      }
+
+      openUploadModal() {
+        document.getElementById('uploadModal').style.display = 'flex';
+      }
+
+      closeUploadModal() {
+        document.getElementById('uploadModal').style.display = 'none';
+        document.getElementById('fileInput').value = '';
+        document.getElementById('selectedFiles').innerHTML = '';
+        document.getElementById('uploadBtn').disabled = true;
+      }
+
+      async downloadFile(fileId) {
+        try {
+          const { blob, filename } = await fileService.download(fileId);
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          console.error('Download error:', error);
+          alert('Error al descargar: ' + error.message);
+        }
+      }
+
+      async deleteFile(fileId) {
+        if (!confirm('¿Eliminar este archivo?')) return;
+        
+        try {
+          await fileService.delete(fileId);
+          await this.loadFiles();
+        } catch (error) {
+          console.error('Delete error:', error);
+          alert('Error al eliminar: ' + error.message);
+        }
+      }
+    }
+
+    window.dashboard = new DashboardController();
+    
+    window.openUploadModal = () => window.dashboard.openUploadModal();
+    window.closeUploadModal = () => window.dashboard.closeUploadModal();
+    window.uploadFiles = () => window.dashboard.uploadFiles();
+    window.toggleFilter = () => alert('Filtros - Funcionalidad en desarrollo');
+    
+    window.handleLogout = async function() {
+      await authService.logout();
+      window.location.href = '../auth/login.html';
+    };
+  </script>
 </body>
 </html>

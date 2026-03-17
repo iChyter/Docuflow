@@ -16,40 +16,43 @@
 -- Habilitar RLS en storage.objects
 alter table storage.objects enable row level security;
 
--- Policy: Todos pueden ver archivos
+-- Política: Todos pueden ver archivos
 CREATE POLICY "Anyone can view files"
     ON storage.objects FOR SELECT
     USING (
         bucket_id = 'documents'
     );
 
--- Policy: Admin y colaborador pueden subir archivos
-CREATE POLICY "Admin and collaborator can upload"
+-- Política: Todos los usuarios autenticados pueden subir archivos
+CREATE POLICY "Authenticated users can upload"
     ON storage.objects FOR INSERT
     WITH CHECK (
         bucket_id = 'documents'
-        AND public.can_edit_documents()
+        AND auth.role() = 'authenticated'
     );
 
--- Policy: Admin puede actualizar cualquier archivo, colaborador solo sus propios
-CREATE POLICY "Admin can update any, collaborator own files"
+-- Política: Admin puede actualizar cualquier archivo, otros solo sus propios
+CREATE POLICY "Users can update own files, admin any"
     ON storage.objects FOR UPDATE
     USING (
         bucket_id = 'documents'
         AND (
-            public.get_current_user_role() = 'admin'
+            public.is_admin()
             OR 
-            (public.get_current_user_role() = 'colaborador' 
-             AND (storage.foldername(name))[1] = (SELECT username FROM public.profiles WHERE id = auth.uid()))
+            (storage.foldername(name))[1] = (SELECT username FROM public.profiles WHERE id = auth.uid())
         )
     );
 
--- Policy: Solo admin puede eliminar archivos
-CREATE POLICY "Only admin can delete files"
+-- Política: Admin puede eliminar cualquier archivo, otros solo sus propios
+CREATE POLICY "Users can delete own files, admin any"
     ON storage.objects FOR DELETE
     USING (
         bucket_id = 'documents'
-        AND public.get_current_user_role() = 'admin'
+        AND (
+            public.is_admin()
+            OR 
+            (storage.foldername(name))[1] = (SELECT username FROM public.profiles WHERE id = auth.uid())
+        )
     );
 
 -- =====================================================
@@ -73,12 +76,12 @@ CREATE POLICY "Only admin can delete files"
 -- - SELECT: Puede ver todos los archivos
 -- - INSERT: Puede subir archivos
 -- - UPDATE: Solo puede actualizar sus propios archivos
--- - DELETE: No puede eliminar archivos
+-- - DELETE: Solo puede eliminar sus propios archivos
 --
 -- [ROL: usuario]
 -- - SELECT: Puede ver todos los archivos
--- - INSERT: NO puede subir archivos
--- - UPDATE: NO puede actualizar archivos
--- - DELETE: NO puede eliminar archivos
+-- - INSERT: Puede subir archivos
+-- - UPDATE: Solo puede actualizar sus propios archivos
+-- - DELETE: Solo puede eliminar sus propios archivos
 --
 -- =====================================================

@@ -192,6 +192,23 @@ begin
 end;
 $$;
 
+-- Función para verificar si es admin
+create or replace function public.is_admin()
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+begin
+    select role into user_role
+    from public.profiles
+    where id = auth.uid();
+    
+    return user_role = 'admin';
+end;
+$$;
+
 -- Función para verificar si el usuario puede eliminar documentos
 create or replace function public.can_delete_document(doc_uploaded_by uuid)
 returns boolean
@@ -213,12 +230,11 @@ begin
         return true;
     end if;
     
-    -- colaborador puede eliminar sus propios documentos
-    if user_role = 'colaborador' and doc_uploaded_by = current_user_id then
+    -- colaborador y usuario pueden eliminar sus propios documentos
+    if doc_uploaded_by = current_user_id then
         return true;
     end if;
     
-    -- usuario no puede eliminar
     return false;
 end;
 $$;
@@ -302,7 +318,7 @@ create policy "Anyone can read profiles"
 
 -- Solo admin puede actualizar cualquier perfil (gestión de usuarios)
 -- Los usuarios pueden actualizar su propio perfil excepto el rol
-create policy "Admin can manage all profiles, users own profile"
+create policy "Admin can update any profile, users own"
     on public.profiles for update
     using (
         public.can_manage_users()
@@ -336,25 +352,24 @@ create policy "Authenticated users can read documents"
         and is_deleted = false
     );
 
--- Admin y colaborador pueden crear documentos
-create policy "Admin and collaborator can create documents"
+-- Todos los usuarios autenticados pueden crear documentos
+create policy "Authenticated users can create documents"
     on public.documents for insert
     with check (
         auth.role() = 'authenticated'
-        and public.can_edit_documents()
     );
 
--- Admin puede actualizar cualquier documento, colaborador solo sus propios
-create policy "Admin can update any document, collaborator own documents"
+-- Admin puede actualizar cualquier documento, otros solo sus propios
+create policy "Users can update own documents, admin any"
     on public.documents for update
     using (
         (public.get_current_user_role() = 'admin')
         or 
-        (public.get_current_user_role() = 'colaborador' and uploaded_by = auth.uid())
+        (uploaded_by = auth.uid())
     );
 
--- Solo admin y dueño (colaborador) pueden eliminar documentos
-create policy "Admin or owner can delete documents"
+-- Admin puede eliminar cualquier documento, otros solo sus propios
+create policy "Users can delete own documents, admin any"
     on public.documents for delete
     using (
         public.can_delete_document(uploaded_by)
@@ -377,14 +392,14 @@ create policy "Authenticated users can create comments"
     );
 
 -- Admin puede editar cualquier comentario, autor puede editar sus propios
-create policy "Admin or author can update comments"
+create policy "Users can update own comments, admin any"
     on public.comments for update
     using (
         public.can_edit_comment(author_id)
     );
 
 -- Admin puede eliminar cualquier comentario, autor puede eliminar sus propios
-create policy "Admin or author can delete comments"
+create policy "Users can delete own comments, admin any"
     on public.comments for delete
     using (
         public.can_edit_comment(author_id)
@@ -405,6 +420,13 @@ create policy "Only admin can view logs"
 create policy "System can insert logs"
     on public.logs for insert
     with check (true);
+
+-- Solo admin puede eliminar logs
+create policy "Only admin can delete logs"
+    on public.logs for delete
+    using (
+        public.can_view_logs()
+    );
 
 -- =====================================================
 -- POLÍTICAS RLS - NOTIFICATIONS

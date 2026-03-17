@@ -118,25 +118,88 @@ class SimpleAuthService {
     
     const role = user.role || 'usuario';
     
+    // Permisos que tienen TODOS los roles (admin, colaborador, usuario)
+    const allRoles = ['admin', 'colaborador', 'usuario'];
+    
+    // Permisos exclusivos de admin
+    const adminOnly = ['admin'];
+    
     switch (permission) {
-      case 'upload_files':
-        return ['admin', 'colaborador'].includes(role);
-      case 'edit_files':
-        return ['admin', 'colaborador'].includes(role);
-      case 'delete_files':
-        return ['admin'].includes(role);
-      case 'manage_users':
-        return ['admin'].includes(role);
-      case 'view_logs':
-        return ['admin'].includes(role);
+      // ARCHIVOS - Todos los roles pueden ver, subir, descargar
       case 'read_files':
-        return ['admin', 'colaborador', 'usuario'].includes(role);
+      case 'view_files':
+      case 'upload_files':
+      case 'download_files':
+      case 'share_files':
+        return allRoles.includes(role);
+      
+      // ARCHIVOS - Solo admin puede eliminar cualquiera, otros solo propios
+      case 'delete_any_file':
+        return adminOnly.includes(role);
+      case 'delete_own_file':
+        return allRoles.includes(role);
+      case 'delete_files':
+        // Fallback: verificar si es admin o propietario en la lógica del componente
+        return allRoles.includes(role);
+      
+      // ARCHIVOS - Editar: admin cualquiera, otros solo propios
+      case 'edit_any_file':
+        return adminOnly.includes(role);
+      case 'edit_own_file':
+        return allRoles.includes(role);
+      case 'edit_files':
+        return allRoles.includes(role);
+      
+      // COMENTARIOS - Todos los roles pueden ver, crear
+      case 'read_comments':
+      case 'view_comments':
       case 'create_comments':
-        return ['admin', 'colaborador', 'usuario'].includes(role);
-      case 'edit_own_comments':
-        return ['admin', 'colaborador', 'usuario'].includes(role);
-      case 'delete_own_comments':
-        return ['admin', 'colaborador', 'usuario'].includes(role);
+        return allRoles.includes(role);
+      
+      // COMENTARIOS - Editar/Eliminar: admin cualquiera, otros solo propios
+      case 'edit_any_comment':
+        return adminOnly.includes(role);
+      case 'edit_own_comment':
+      case 'edit_comments':
+        return allRoles.includes(role);
+      case 'delete_any_comment':
+        return adminOnly.includes(role);
+      case 'delete_own_comment':
+      case 'delete_comments':
+        return allRoles.includes(role);
+      
+      // TAREAS - Asignar tareas
+      case 'assign_tasks':
+        return allRoles.includes(role);
+      
+      // USUARIOS - Solo admin
+      case 'view_users':
+      case 'create_users':
+      case 'edit_users':
+      case 'delete_users':
+      case 'manage_users':
+      case 'manage_permissions':
+        return adminOnly.includes(role);
+      
+      // LOGS - Solo admin
+      case 'view_logs':
+      case 'export_logs':
+      case 'delete_logs':
+        return adminOnly.includes(role);
+      
+      // DASHBOARD - Todos pueden ver, estadísticas, exportar
+      case 'view_dashboard':
+      case 'view_statistics':
+      case 'export_dashboard':
+        return allRoles.includes(role);
+      
+      // SISTEMA - Solo admin
+      case 'system_settings':
+      case 'system_backup':
+      case 'system_maintenance':
+      case 'manage_system':
+        return adminOnly.includes(role);
+      
       default:
         return false;
     }

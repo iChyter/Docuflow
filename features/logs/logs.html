@@ -3,189 +3,224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DocuFlow - Logs del Sistema</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="../../shared/styles/styles.css">
-  <style>
-    .log-entry {
-      transition: background-color 0.2s;
-      border-left: 4px solid transparent;
-    }
-    .log-entry:hover {
-      background-color: #f8f9fa;
-    }
-    .log-entry.success { border-left-color: #198754; }
-    .log-entry.error { border-left-color: #dc3545; }
-    .log-entry.warning { border-left-color: #ffc107; }
-    .log-entry.info { border-left-color: #0d6efd; }
-    .log-timestamp {
-      font-size: 0.85rem;
-      color: #6c757d;
-    }
-  </style>
+  <title>DocuFlow - Logs</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/styles/slothui.css">
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary" style="position: sticky; top: 0; z-index: 1000;">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="../dashboard/dashboard.html">
-        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="DocuFlow" width="30" height="30" class="me-2">
-        DocuFlow
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="../dashboard/dashboard.html">
-              <i class="bi bi-house-door me-1"></i>Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../files/upload.html">
-              <i class="bi bi-cloud-upload me-1"></i>Archivos
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../comments/comments.html">
-              <i class="bi bi-chat-dots me-1"></i>Comentarios
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" href="logs.html">
-              <i class="bi bi-journal-text me-1"></i>Logs
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../permissions/permissions.html">
-              <i class="bi bi-shield-check me-1"></i>Permisos
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="../export/export.html">
-              <i class="bi bi-download me-1"></i>Exportar
-            </a>
-          </li>
-        </ul>
-        <ul class="navbar-nav">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              <i class="bi bi-person-circle me-1"></i>
-              <span id="nav-username">Usuario</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="../profile/profile.html">
-                <i class="bi bi-person me-2"></i>Mi Perfil
-              </a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#" onclick="window.handleLogout()">
-                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-              </a></li>
-            </ul>
-          </li>
-        </ul>
+  <div class="app-container">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">D</div>
+        <span class="brand-name">DocuFlow</span>
       </div>
-    </div>
-  </nav>
-
-  <!-- Main Content -->
-  <div class="container mt-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2><i class="bi bi-journal-text me-2"></i>Logs del Sistema</h2>
-      <button class="btn btn-primary" onclick="window.logsController.exportLogs()">
-        <i class="bi bi-download me-1"></i>Exportar
-      </button>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <div class="card bg-primary text-white">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-journal-text me-2"></i>Total Logs</h5>
-            <h2 id="totalLogs">0</h2>
-          </div>
+      
+      <div class="sidebar-search">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Buscar...">
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card bg-success text-white">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-check-circle me-2"></i>Exitosos</h5>
-            <h2 id="successLogs">0</h2>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <a href="../dashboard/dashboard.html" class="nav-item">
+            <i class="bi bi-house-door"></i>
+            <span>Inicio</span>
+          </a>
+          <a href="../files/upload.html" class="nav-item">
+            <i class="bi bi-folder"></i>
+            <span>Archivos</span>
+          </a>
+          <a href="../comments/comments.html" class="nav-item">
+            <i class="bi bi-chat-dots"></i>
+            <span>Comentarios</span>
+          </a>
+          <a href="./logs.html" class="nav-item active">
+            <i class="bi bi-journal-text"></i>
+            <span>Logs</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <a href="../permissions/permissions.html" class="nav-item">
+            <i class="bi bi-people"></i>
+            <span>Usuarios</span>
+          </a>
+          <a href="../export/export.html" class="nav-item">
+            <i class="bi bi-download"></i>
+            <span>Exportar</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <a href="#" class="nav-item">
+            <i class="bi bi-gear"></i>
+            <span>Configuración</span>
+          </a>
+          <a href="#" class="nav-item">
+            <i class="bi bi-question-circle"></i>
+            <span>Ayuda</span>
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="promo-box">
+          <p>Actualiza a Pro para acceso ilimitado</p>
+          <div class="promo-actions">
+            <button class="btn-promo btn-promo-outline">Cerrar</button>
+            <button class="btn-promo btn-promo-primary">Go Pro</button>
           </div>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card bg-danger text-white">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-x-circle me-2"></i>Errores</h5>
-            <h2 id="errorLogs">0</h2>
+        
+        <div class="user-profile" onclick="window.handleLogout()">
+          <img src="https://ui-avatars.com/api/?name=Usuario&background=6366f1&color=fff" alt="User" class="user-avatar">
+          <div class="user-info">
+            <div class="user-name" id="user-name">Usuario</div>
+            <div class="user-role">Miembro</div>
           </div>
+          <i class="bi bi-box-arrow-right" style="color: var(--text-muted);"></i>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- Filters -->
-    <div class="mb-4">
-      <div class="row">
-        <div class="col-md-4">
-          <select class="form-select" id="actionFilter">
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <div class="breadcrumb">
+          <a href="../dashboard/dashboard.html">Dashboard</a>
+          <i class="bi bi-chevron-right"></i>
+          <span>Logs</span>
+        </div>
+        
+        <div class="header-actions">
+          <div class="header-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchLogs" placeholder="Buscar logs...">
+          </div>
+          
+          <button class="btn-primary" onclick="window.exportLogs()">
+            <i class="bi bi-download"></i>
+            Exportar
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <!-- Stats -->
+        <div class="row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px;">
+          <div class="card" style="padding: 24px; border-radius: 16px; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="width: 48px; height: 48px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-journal-text" style="color: white; font-size: 24px;"></i>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700;" id="total-logs">0</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Total Logs</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding: 24px; border-radius: 16px; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="width: 48px; height: 48px; background: var(--success); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-check-circle" style="color: white; font-size: 24px;"></i>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700;" id="success-logs">0</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Exitosos</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding: 24px; border-radius: 16px; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="width: 48px; height: 48px; background: var(--danger); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-x-circle" style="color: white; font-size: 24px;"></i>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700;" id="error-logs">0</div>
+                <div style="font-size: 13px; color: var(--text-muted);">Errores</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+          <select id="actionFilter" style="padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); font-family: 'Geologica', sans-serif;">
             <option value="">Todas las acciones</option>
             <option value="upload">Subidas</option>
             <option value="download">Descargas</option>
             <option value="delete">Eliminaciones</option>
             <option value="login">Logins</option>
-            <option value="logout">Logouts</option>
           </select>
-        </div>
-        <div class="col-md-4">
-          <select class="form-select" id="statusFilter">
-            <option value="">Todos los estados</option>
-            <option value="success">Exitoso</option>
-            <option value="error">Error</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <button class="btn btn-secondary" onclick="window.logsController.applyFilters()">
-            <i class="bi bi-funnel me-1"></i>Filtrar
+          <button class="btn-filter" onclick="window.applyFilters()">
+            <i class="bi bi-funnel"></i> Filtrar
           </button>
         </div>
-      </div>
-    </div>
 
-    <!-- Search -->
-    <div class="mb-3">
-      <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input type="text" id="searchInput" class="form-control" placeholder="Buscar logs...">
-      </div>
-    </div>
+        <!-- Logs Table -->
+        <div class="table-section">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Acción</th>
+                  <th>Usuario</th>
+                  <th>Detalles</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table-body">
+                <!-- Logs will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-    <!-- Logs List -->
-    <div id="logsContainer" class="mb-4">
-      <div class="text-center text-muted p-4">
-        <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
-        <p class="mt-2">No hay logs</p>
+        <!-- Pagination -->
+        <nav style="margin-top: 24px;">
+          <ul class="pagination justify-content-center" id="pagination"></ul>
+        </nav>
       </div>
-    </div>
+    </main>
 
-    <!-- Pagination -->
-    <nav>
-      <ul class="pagination justify-content-center" id="pagination"></ul>
-    </nav>
+    <!-- Right Sidebar -->
+    <aside class="right-sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Resumen</span>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label"><i class="bi bi-upload"></i> Subidas</div>
+            <div class="stat-value" id="stat-uploads">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label"><i class="bi bi-download"></i> Descargas</div>
+            <div class="stat-value" id="stat-downloads">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label"><i class="bi bi-trash"></i> Eliminaciones</div>
+            <div class="stat-value" id="stat-deletes">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label"><i class="bi bi-person"></i> Logins</div>
+            <div class="stat-value" id="stat-logins">0</div>
+          </div>
+        </div>
+      </div>
+    </aside>
   </div>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
     window.APP_CONFIG = {
       SUPABASE_URL: 'https://nlgcevktvqwgddibxsja.supabase.co',
-      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sZ2Nldmt0dnF3Z2RkaWJ4c2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTEzMDIsImV4cCI6MjA4OTI2NzMwMn0.bGRQHbEcrQMKnacIqM76aCS86wOEyL1p4O-4enZypXE',
-      EDGE_FUNCTION_URL: 'https://nlgcevktvqwgddibxsja.supabase.co/functions/v1'
+      SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sZ2Nldmt0dnF3Z2RkaWJ4c2phIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2OTEzMDIsImV4cCI6MjA4OTI2NzMwMn0.bGRQHbEcrQMKnacIqM76aCS86wOEyL1p4O-4enZypXE'
     };
   </script>
   
@@ -203,18 +238,15 @@
       }
 
       async init() {
-        console.log('=== Logs Controller Init ===');
-        
-        this.updateUserInfo();
+        await this.loadUserInfo();
         await this.loadLogs();
         this.setupEventListeners();
       }
 
-      async updateUserInfo() {
+      async loadUserInfo() {
         const user = await authService.getCurrentUser();
-        const usernameEl = document.getElementById('nav-username');
-        if (usernameEl && user) {
-          usernameEl.textContent = user.username || user.full_name || user.email;
+        if (user) {
+          document.getElementById('user-name').textContent = user.username || user.email || 'Usuario';
         }
       }
 
@@ -223,9 +255,8 @@
           const result = await logService.list(100);
           this.logs = Array.isArray(result) ? result : [];
           this.filteredLogs = [...this.logs];
-          console.log('Logs cargados:', this.logs.length);
         } catch (error) {
-          console.log('Error cargando logs:', error.message);
+          console.error('Error loading logs:', error);
           this.logs = [];
           this.filteredLogs = [];
         }
@@ -234,128 +265,64 @@
       }
 
       setupEventListeners() {
-        const searchInput = document.getElementById('searchInput');
+        const searchInput = document.getElementById('searchLogs');
         if (searchInput) {
           searchInput.addEventListener('input', (e) => this.searchLogs(e.target.value));
         }
-
-        const actionFilter = document.getElementById('actionFilter');
-        if (actionFilter) {
-          actionFilter.addEventListener('change', () => this.applyFilters());
-        }
-
-        const statusFilter = document.getElementById('statusFilter');
-        if (statusFilter) {
-          statusFilter.addEventListener('change', () => this.applyFilters());
-        }
       }
 
-      applyFilters() {
-        const action = document.getElementById('actionFilter').value;
-        const status = document.getElementById('statusFilter').value;
-        
-        this.filteredLogs = this.logs.filter(log => {
-          if (action && !log.action?.toLowerCase().includes(action.toLowerCase())) {
-            return false;
-          }
-          if (status === 'success' && log.details?.toLowerCase().includes('error')) {
-            return false;
-          }
-          if (status === 'error' && !log.details?.toLowerCase().includes('error')) {
-            return false;
-          }
-          return true;
-        });
-        
-        this.currentPage = 1;
-        this.renderLogs();
-      }
+      renderLogs() {
+        const tbody = document.getElementById('logs-table-body');
+        if (!tbody) return;
 
-      searchLogs(query) {
-        if (!query) {
-          this.applyFilters();
-          return;
-        }
-        
-        const lowerQuery = query.toLowerCase();
-        const searched = this.filteredLogs.filter(log => 
-          log.action?.toLowerCase().includes(lowerQuery) ||
-          log.details?.toLowerCase().includes(lowerQuery) ||
-          log.user_email?.toLowerCase().includes(lowerQuery)
-        );
-        
-        this.renderLogs(searched);
-      }
-
-      renderLogs(logs = null) {
-        const container = document.getElementById('logsContainer');
-        if (!container) return;
-
-        const displayLogs = logs || this.filteredLogs;
-        
-        if (displayLogs.length === 0) {
-          container.innerHTML = `
-            <div class="text-center text-muted p-4">
-              <i class="bi bi-journal-x" style="font-size: 3rem;"></i>
-              <p class="mt-2">No hay logs</p>
-            </div>`;
+        if (this.filteredLogs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">No hay logs</td></tr>';
           return;
         }
 
         const start = (this.currentPage - 1) * this.perPage;
-        const paginatedLogs = displayLogs.slice(start, start + this.perPage);
+        const paginatedLogs = this.filteredLogs.slice(start, start + this.perPage);
 
-        container.innerHTML = paginatedLogs.map(log => {
-          const logClass = log.details?.toLowerCase().includes('error') ? 'error' : 
-                          log.details?.toLowerCase().includes('success') ? 'success' : 'info';
-          const icon = logClass === 'error' ? 'bi-x-circle' : 
-                      logClass === 'success' ? 'bi-check-circle' : 'bi-info-circle';
+        tbody.innerHTML = paginatedLogs.map(log => {
+          const isError = log.details?.toLowerCase().includes('error');
+          const iconClass = isError ? 'text-danger' : 'text-success';
+          const icon = isError ? 'bi-x-circle' : 'bi-check-circle';
           
           return `
-            <div class="card log-entry ${logClass} mb-2">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="d-flex align-items-center">
-                    <i class="bi ${icon} me-2 ${logClass === 'error' ? 'text-danger' : logClass === 'success' ? 'text-success' : 'text-primary'}"></i>
-                    <div>
-                      <strong>${log.action || 'Acción'}</strong>
-                      <small class="text-muted ms-2">${log.user_email || log.profiles?.username || 'Usuario'}</small>
-                    </div>
-                  </div>
-                  <small class="log-timestamp">${this.formatDate(log.created_at)}</small>
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <i class="bi ${icon} ${iconClass}"></i>
+                  <span style="font-weight: 500;">${log.action || 'Acción'}</span>
                 </div>
-                <p class="mb-0 mt-2 text-muted">${log.details || ''}</p>
-              </div>
-            </div>
+              </td>
+              <td style="color: var(--text-secondary);">${log.user_email || log.profiles?.username || 'Usuario'}</td>
+              <td style="color: var(--text-muted);">${log.details || '-'}</td>
+              <td style="color: var(--text-muted); font-size: 13px;">${this.formatDate(log.created_at)}</td>
+            </tr>
           `;
         }).join('');
 
-        this.renderPagination(displayLogs.length);
+        this.renderPagination();
       }
 
-      renderPagination(totalItems) {
-        const totalPages = Math.ceil(totalItems / this.perPage);
+      renderPagination() {
+        const totalPages = Math.ceil(this.filteredLogs.length / this.perPage);
         const pagination = document.getElementById('pagination');
         
-        if (!pagination) return;
+        if (!pagination || totalPages <= 1) {
+          if (pagination) pagination.innerHTML = '';
+          return;
+        }
         
         let html = '';
+        html += `<li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="window.logsController.goToPage(${this.currentPage - 1}); return false;">Anterior</a></li>`;
         
-        if (totalPages > 1) {
-          html += `<li class="page-item ${this.currentPage === 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="window.logsController.goToPage(${this.currentPage - 1})">Anterior</a>
-          </li>`;
-          
-          for (let i = 1; i <= totalPages; i++) {
-            html += `<li class="page-item ${this.currentPage === i ? 'active' : ''}">
-              <a class="page-link" href="#" onclick="window.logsController.goToPage(${i})">${i}</a>
-            </li>`;
-          }
-          
-          html += `<li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="window.logsController.goToPage(${this.currentPage + 1})">Siguiente</a>
-          </li>`;
+        for (let i = 1; i <= totalPages; i++) {
+          html += `<li class="page-item ${this.currentPage === i ? 'active' : ''}"><a class="page-link" href="#" onclick="window.logsController.goToPage(${i}); return false;">${i}</a></li>`;
         }
+        
+        html += `<li class="page-item ${this.currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="window.logsController.goToPage(${this.currentPage + 1}); return false;">Siguiente</a></li>`;
         
         pagination.innerHTML = html;
       }
@@ -365,29 +332,57 @@
         this.renderLogs();
       }
 
+      searchLogs(query) {
+        if (!query) {
+          this.filteredLogs = [...this.logs];
+        } else {
+          const lowerQuery = query.toLowerCase();
+          this.filteredLogs = this.logs.filter(log => 
+            log.action?.toLowerCase().includes(lowerQuery) ||
+            log.details?.toLowerCase().includes(lowerQuery)
+          );
+        }
+        this.currentPage = 1;
+        this.renderLogs();
+      }
+
+      applyFilters() {
+        const action = document.getElementById('actionFilter').value;
+        
+        if (!action) {
+          this.filteredLogs = [...this.logs];
+        } else {
+          this.filteredLogs = this.logs.filter(log => 
+            log.action?.toLowerCase().includes(action.toLowerCase())
+          );
+        }
+        
+        this.currentPage = 1;
+        this.renderLogs();
+      }
+
       updateStats() {
         const total = this.logs.length;
         const errors = this.logs.filter(l => l.details?.toLowerCase().includes('error')).length;
         const success = total - errors;
+        
+        const uploads = this.logs.filter(l => l.action?.toLowerCase().includes('upload')).length;
+        const downloads = this.logs.filter(l => l.action?.toLowerCase().includes('download')).length;
+        const deletes = this.logs.filter(l => l.action?.toLowerCase().includes('delete')).length;
+        const logins = this.logs.filter(l => l.action?.toLowerCase().includes('login')).length;
 
-        document.getElementById('totalLogs').textContent = total;
-        document.getElementById('errorLogs').textContent = errors;
-        document.getElementById('successLogs').textContent = success;
-      }
-
-      formatDate(dateStr) {
-        if (!dateStr) return '';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('es-ES', { 
-          day: 'numeric', 
-          month: 'short', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
+        document.getElementById('total-logs').textContent = total;
+        document.getElementById('success-logs').textContent = success;
+        document.getElementById('error-logs').textContent = errors;
+        
+        document.getElementById('stat-uploads').textContent = uploads;
+        document.getElementById('stat-downloads').textContent = downloads;
+        document.getElementById('stat-deletes').textContent = deletes;
+        document.getElementById('stat-logins').textContent = logins;
       }
 
       exportLogs() {
-        const csv = this.filteredLogs.map(log => 
+        const csv = this.logs.map(log => 
           `${log.created_at},${log.action},${log.user_email || ''},${log.details || ''}`
         ).join('\n');
         
@@ -395,13 +390,22 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `logs_${new Date().toISOString()}.csv`;
+        a.download = `logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
+      }
+
+      formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       }
     }
 
     window.logsController = new LogsController();
+    
+    window.applyFilters = () => window.logsController.applyFilters();
+    window.exportLogs = () => window.logsController.exportLogs();
     
     window.handleLogout = async function() {
       await authService.logout();

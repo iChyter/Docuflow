@@ -63,10 +63,14 @@ export const authService = {
     } catch (error) {
       console.warn('Logout warning:', error.message)
     }
-    
+
     localStorage.removeItem('docuflow_user')
     localStorage.removeItem('docuflow_login_time')
     localStorage.removeItem('docuflow_token')
+
+    // ✅ Invalidar caché de rol al cerrar sesión
+    localStorage.removeItem('docuflow_role')
+    localStorage.removeItem('docuflow_role_time')
   },
 
   async getCurrentUser() {

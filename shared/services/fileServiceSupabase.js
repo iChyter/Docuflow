@@ -41,7 +41,7 @@ export const fileService = {
     return await callEdgeFunction('get', { id })
   },
 
-  async upload(file, onProgress = null) {
+  async upload(file, onProgress = null, folderId = null) {
     const user = await authService.getCurrentUser()
     console.log('Upload - User:', user);
     if (!user) throw new Error('Not authenticated')
@@ -51,7 +51,9 @@ export const fileService = {
     if (!userId) throw new Error('User ID not found')
 
     const fileName = `${Date.now()}_${file.name}`
-    const filePath = `${userId}/${fileName}`
+    const filePath = folderId 
+      ? `${userId}/folder_${folderId}/${fileName}`
+      : `${userId}/${fileName}`
     console.log('Upload - File path:', filePath);
 
     // Upload to Supabase Storage
@@ -76,7 +78,8 @@ export const fileService = {
       filename: file.name,
       fileType: file.type,
       filePath: urlData.publicUrl,
-      size: file.size
+      size: file.size,
+      folderId: folderId
     })
 
     return document
@@ -96,6 +99,12 @@ export const fileService = {
       } else if (filePath.includes('/storage/v1/object/')) {
         filePath = filePath.split('/storage/v1/object/')[1]
       }
+      
+      // Remove bucket name if included
+      if (filePath && filePath.startsWith(SUPABASE_CONFIG.bucket + '/')) {
+        filePath = filePath.substring(SUPABASE_CONFIG.bucket.length + 1)
+      }
+      
       console.log('Delete - Storage path:', filePath)
       
       // Intentar eliminar del storage
@@ -137,9 +146,14 @@ export const fileService = {
         throw new Error('Ruta del archivo no encontrada')
       }
 
-      // Extract path from URL
+      // Extract path from URL (remove bucket name)
       const pathParts = doc.file_path.split('/storage/v1/object/public/')
-      const filePath = pathParts[1] || doc.file_path
+      let filePath = pathParts[1] || doc.file_path
+      
+      // Remove bucket name if included (e.g., "documents/userId/file" -> "userId/file")
+      if (filePath.startsWith(SUPABASE_CONFIG.bucket + '/')) {
+        filePath = filePath.substring(SUPABASE_CONFIG.bucket.length + 1)
+      }
       
       // Download from Supabase Storage
       const { data, error } = await supabase.storage

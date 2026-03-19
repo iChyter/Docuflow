@@ -6,6 +6,9 @@
   <title>DocuFlow - Permisos</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../shared/styles/slothui.css">
+  <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
+  <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
+  <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
 </head>
 <body>
   <div class="app-container">
@@ -146,70 +149,94 @@
   <script type="module">
     import { userService } from '../../shared/services/userServiceSupabase.js';
     import { authService } from '../../shared/services/authServiceSupabase.js';
+    import { initPermissionGuard, permissionService } from '../../shared/services/permissionGuard.js';
 
     class PermissionsController {
       constructor() {
         this.users = [];
         this.selectedUser = null;
         this.isAdmin = false;
+        this.canManagePermissions = false;
+        this.canCreateUsers = false;
+        this.canDeleteUsers = false;
       }
 
       async init() {
-        await this.checkAdminRole();
+        // Verificar permisos usando el nuevo sistema
+        const hasAccess = await initPermissionGuard({
+          module: 'usuarios',
+          permission: 'ver',
+          redirectTo: '../dashboard/dashboard.html'
+        });
+        
+        if (!hasAccess) return;
+        
+        // Cargar permisos específicos
+        await this.loadPermissions();
         await this.loadUsers();
         this.setupEventListeners();
         this.updateUIForRole();
       }
 
-      async checkAdminRole() {
-        console.log('Checking admin role...');
+      async loadPermissions() {
         try {
-          // Try Edge Function first
-          const profile = await userService.getProfile();
-          console.log('Profile from Edge Function:', profile);
-          this.isAdmin = profile?.role === 'admin';
+          this.isAdmin = await permissionService.isAdmin();
+          this.canManagePermissions = await permissionService.canManagePermissions();
+          this.canCreateUsers = await permissionService.canCreateUsers();
+          this.canDeleteUsers = await permissionService.canDeleteUsers();
+          
+          console.log('[Permissions] Permisos cargados:', {
+            isAdmin: this.isAdmin,
+            canManagePermissions: this.canManagePermissions,
+            canCreateUsers: this.canCreateUsers,
+            canDeleteUsers: this.canDeleteUsers
+          });
         } catch (error) {
-          console.log('Edge Function failed, checking with direct query:', error);
-          try {
-            // Fallback: direct query to profiles
-            const { supabase } = await import('../../shared/services/supabaseClient.js');
-            const { data: { user } } = await supabase.auth.getUser();
-            console.log('Current user:', user);
-            
-            if (user) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single();
-              
-              console.log('Profile from direct query:', profile);
-              this.isAdmin = profile?.role === 'admin';
-            }
-          } catch (e) {
-            console.log('Could not determine admin status:', e);
-            this.isAdmin = false;
-          }
+          console.error('[Permissions] Error cargando permisos:', error);
+          this.isAdmin = false;
+          this.canManagePermissions = false;
+          this.canCreateUsers = false;
+          this.canDeleteUsers = false;
         }
-        console.log('isAdmin:', this.isAdmin);
       }
 
       updateUIForRole() {
-        console.log('Updating UI for role, isAdmin:', this.isAdmin);
+        console.log('[Permissions] Actualizando UI, permisos:', {
+          isAdmin: this.isAdmin,
+          canCreateUsers: this.canCreateUsers,
+          canManagePermissions: this.canManagePermissions
+        });
+        
+        // Botón de crear usuario
         const createBtn = document.getElementById('btn-create-user');
         if (createBtn) {
-          createBtn.style.display = this.isAdmin ? 'flex' : 'none';
+          createBtn.style.display = this.canCreateUsers ? 'flex' : 'none';
         }
         
-        // Also show a message if not admin
+        // Select de roles y botón guardar
+        const roleSelect = document.getElementById('newRole');
+        const saveBtn = document.getElementById('btn-save-role');
+        
+        if (roleSelect && !this.canManagePermissions) {
+          roleSelect.disabled = true;
+          roleSelect.title = 'No tienes permiso para gestionar roles';
+        }
+        
+        if (saveBtn && !this.canManagePermissions) {
+          saveBtn.disabled = true;
+          saveBtn.style.opacity = '0.5';
+          saveBtn.title = 'No tienes permiso para guardar cambios de rol';
+        }
+        
+        // Mensaje si no puede gestionar permisos
         const roleSection = document.querySelector('.sidebar-section:last-child');
-        if (roleSection && !this.isAdmin) {
+        if (roleSection && !this.canManagePermissions) {
           let msg = document.getElementById('admin-msg');
           if (!msg) {
             msg = document.createElement('div');
             msg.id = 'admin-msg';
             msg.style.cssText = 'padding:10px;background:var(--surface-hover);border-radius:8px;font-size:12px;color:var(--text-muted);margin-top:8px;';
-            msg.innerHTML = '<i class="bi bi-lock"></i> Solo administradores pueden editar roles';
+            msg.innerHTML = '<i class="bi bi-lock"></i> Solo administradores pueden gestionar roles y permisos';
             roleSection.querySelector('div').appendChild(msg);
           }
         }

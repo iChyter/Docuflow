@@ -6,6 +6,9 @@
   <title>DocuFlow - Logs</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../shared/styles/slothui.css">
+  <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
+  <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
+  <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
 </head>
 <body>
   <div class="app-container">
@@ -138,6 +141,7 @@
   <script type="module">
     import { logService } from '../../shared/services/logServiceSupabase.js';
     import { authService } from '../../shared/services/authServiceSupabase.js';
+    import { initPermissionGuard, permissionService } from '../../shared/services/permissionGuard.js';
 
     class LogsController {
       constructor() {
@@ -146,16 +150,39 @@
         this.currentPage = 1;
         this.perPage = 20;
         this.loading = false;
+        this.hasDeletePermission = false;
       }
 
       async init() {
+        // Verificar permisos antes de cargar
+        const hasAccess = await initPermissionGuard({
+          module: 'logs',
+          permission: 'ver',
+          redirectTo: '../dashboard/dashboard.html'
+        });
+        
+        if (!hasAccess) return;
+        
         if (this.loading) return;
         this.loading = true;
         
+        // Verificar permiso de eliminar
+        this.hasDeletePermission = await permissionService.canDeleteLogs();
+        
         await this.loadLogs();
         this.setupEventListeners();
+        this.applyPermissions();
         
         this.loading = false;
+      }
+
+      async applyPermissions() {
+        // Ocultar botón de exportar si no tiene permiso
+        const canExport = await permissionService.canExportLogs();
+        const exportBtn = document.querySelector('[data-perm="logs:export"]');
+        if (exportBtn && !canExport) {
+          exportBtn.style.display = 'none';
+        }
       }
 
       async loadLogs() {

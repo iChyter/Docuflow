@@ -1,0 +1,294 @@
+/* Phone Styles (< 768px) - Overlay layout with both sidebars accessible via toggles */
+
+/* Left Sidebar - Collapsible with overlay */
+.sidebar {
+  width: 280px;
+  transform: translateX(-100%);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 1000;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  transition: transform 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  padding: 20px;
+}
+
+.sidebar-search {
+  padding: 16px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* Right Sidebar - Collapsible with overlay */
+.right-sidebar {
+  width: 100%;
+  max-width: 320px;
+  transform: translateX(100%);
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 998;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+}
+
+.right-sidebar.open {
+  transform: translateX(0);
+}
+
+.right-sidebar.closed {
+  transform: translateX(100%);
+}
+
+/* Main content - No margins on phone */
+.main-content {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+
+/* Mobile overlay */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 997;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Mobile menu buttons */
+.mobile-menu-btn,
+.mobile-right-toggle {
+  display: flex;
+  position: fixed;
+  top: 16px;
+  width: 48px;
+  height: 48px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mobile-menu-btn {
+  left: 16px;
+}
+
+.mobile-right-toggle {
+  right: 16px;
+}
+
+.mobile-menu-btn i,
+.mobile-right-toggle i {
+  font-size: 20px;
+  color: var(--text-primary);
+}
+
+/* Grid layouts - Single column on phone */
+.file-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.quick-access-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.export-card {
+  padding: 24px 16px;
+}
+
+.export-card h3 {
+  font-size: 16px;
+}
+
+.export-card p {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Navigation - Compact */
+.nav-section {
+  margin-bottom: 16px;
+}
+
+.nav-item {
+  padding: 12px;
+  font-size: 15px;
+}
+
+.nav-item i {
+  font-size: 20px;
+}
+
+/* Cards - Compact */
+.sidebar-section {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-section-header {
+  margin-bottom: 10px;
+}
+
+.sidebar-section-title {
+  font-size: 14px;
+}
+
+.stat-card {
+  padding: 16px;
+  border-radius: 12px;
+}
+
+/* File preview - Compact */
+.file-preview {
+  padding: 16px;
+  text-align: center;
+}
+
+.file-preview-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+}
+
+.file-preview-icon i {
+  font-size: 24px;
+}
+
+.file-preview-title {
+  font-size: 14px;
+}
+
+.file-preview-meta {
+  font-size: 12px;
+}
+
+/* Buttons - Full width on phone */
+.btn-primary,
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+}
+
+/* Section headers */
+.section-header {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+}
+
+/* Content - More padding for touch */
+.content {
+  padding: 16px;
+}
+
+/* Table - Scrollable on phone */
+.table-container {
+  overflow-x: auto;
+}
+
+.table-container table {
+  min-width: 600px;
+}
+
+.table-container th,
+.table-container td {
+  padding: 10px;
+  font-size: 13px;
+}
+
+/* Forms - Full width */
+input,
+select,
+textarea {
+  width: 100%;
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+/* Stats grid - Single column */
+.stats-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* Quick stats - Stacked */
+.row[style*="display: grid"] {
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+/* Modal - Full screen on phone */
+.modal > div {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  height: 100%;
+}
+
+/* Badge - Smaller */
+.badge {
+  font-size: 10px;
+  padding: 2px 5px;
+}
+
+/* Footer in sidebar */
+.sidebar-footer {
+  padding: 12px;
+}
+
+/* Search */
+.search-box input {
+  font-size: 16px;
+  padding: 10px 12px 10px 32px;
+}
+
+/* Export format buttons */
+.export-format-btn {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 13px;
+}
+
+.export-format-btn span {
+  display: block;
+}

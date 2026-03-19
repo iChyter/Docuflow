@@ -6,6 +6,9 @@
   <title>DocuFlow - Archivos</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../shared/styles/slothui.css">
+  <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
+  <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
+  <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
 </head>
 <body>
   <div class="app-container">
@@ -62,6 +65,13 @@
           </div>
         </div>
         
+        <!-- Breadcrumb -->
+        <div id="breadcrumb" style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 14px;">
+          <a href="#" onclick="window.filesController.navigateToFolder(null); return false;" style="color: var(--primary-color); text-decoration: none;">
+            <i class="bi bi-house"></i> Inicio
+          </a>
+        </div>
+        
         <div class="file-grid" id="files-grid">
           <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted);">
             <i class="bi bi-arrow-clockwise" style="font-size: 32px; animation: spin 1s linear infinite;"></i>
@@ -79,8 +89,18 @@
         </div>
         
         <div class="file-preview" id="file-preview">
-          <div class="file-preview-icon">
-            <i class="bi bi-folder" style="color: var(--primary-color);"></i>
+          <!-- Preview image container -->
+          <div id="preview-image-container" style="display: none; margin-bottom: 16px;">
+            <img id="preview-image" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; background: var(--surface-hover);">
+          </div>
+          
+          <!-- PDF preview container -->
+          <div id="preview-pdf-container" style="display: none; margin-bottom: 16px;">
+            <iframe id="preview-pdf" style="width: 100%; height: 200px; border: none; border-radius: 8px; background: var(--surface-hover);"></iframe>
+          </div>
+          
+          <div class="file-preview-icon" id="preview-icon-container">
+            <i class="bi bi-file-earmark" style="color: var(--primary-color); font-size: 48px;"></i>
           </div>
           <div class="file-preview-title" id="preview-name">Selecciona un archivo</div>
           <div class="file-preview-meta" id="preview-meta">-</div>
@@ -115,6 +135,12 @@
         <button onclick="window.closeUploadModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-muted);">&times;</button>
       </div>
       <div style="padding: 24px;">
+        <!-- Current folder indicator -->
+        <div id="uploadFolderInfo" style="margin-bottom: 16px; padding: 12px; background: var(--surface-hover); border-radius: 8px; font-size: 14px;">
+          <i class="bi bi-folder" style="color: var(--warning);"></i>
+          <span id="uploadFolderName">Raíz</span>
+        </div>
+        
         <div id="dropZone" style="border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s;">
           <i class="bi bi-cloud-arrow-up" style="font-size: 56px; color: var(--primary-color);"></i>
           <p style="margin: 16px 0 8px; font-size: 16px; font-weight: 500;">Arrastra archivos aquí</p>
@@ -132,13 +158,183 @@
     </div>
   </div>
 
+  <!-- New Folder Modal -->
+  <div class="modal" id="folderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: var(--surface); border-radius: 20px; width: 100%; max-width: 400px; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <h5 style="margin: 0; font-size: 20px; font-weight: 600;">Nueva Carpeta</h5>
+        <button onclick="window.closeFolderModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-muted);">&times;</button>
+      </div>
+      <div style="padding: 24px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Nombre de la carpeta</label>
+          <input type="text" id="folderName" placeholder="Mi carpeta" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; outline: none;">
+        </div>
+        <div id="folderError" style="color: var(--danger); font-size: 13px; display: none;"></div>
+      </div>
+      <div style="padding: 20px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px;">
+        <button onclick="window.closeFolderModal()" style="padding: 12px 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; font-weight: 500;">Cancelar</button>
+        <button class="btn-primary" id="createFolderBtn" onclick="window.createFolder()" style="padding: 12px 24px;">
+          <i class="bi bi-folder-plus"></i> Crear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal" id="previewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center;" onclick="window.closePreviewModal(event)">
+    <div style="position: relative; max-width: 90%; max-height: 90%;">
+      <button onclick="window.closePreviewModal()" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 32px; cursor: pointer; z-index: 10001;">&times;</button>
+      
+      <!-- Loading spinner -->
+      <div id="preview-loading" style="display: flex; align-items: center; justify-content: center; padding: 60px;">
+        <div style="text-align: center; color: white;">
+          <div class="spinner-border" role="status" style="width: 50px; height: 50px; border-width: 4px;"></div>
+          <p style="margin-top: 16px; font-size: 16px;">Cargando...</p>
+        </div>
+      </div>
+      
+      <!-- Image preview -->
+      <img id="preview-modal-image" style="max-width: 100%; max-height: 85vh; border-radius: 8px; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" onclick="event.stopPropagation()" onload="this.style.display='block'; document.getElementById('preview-loading').style.display='none'" onerror="document.getElementById('preview-loading').style.display='none'; this.style.display='none'">
+      
+      <!-- PDF preview -->
+      <iframe id="preview-modal-pdf" style="width: 80vw; height: 85vh; border: none; border-radius: 8px; display: none; background: white;" onclick="event.stopPropagation()" onload="this.style.display='block'; document.getElementById('preview-loading').style.display='none'"></iframe>
+      
+      <!-- File info -->
+      <div id="preview-modal-info" style="position: absolute; bottom: -50px; left: 0; right: 0; text-align: center; color: white; font-size: 14px;">
+        <span id="preview-modal-filename"></span>
+        <button class="btn-primary" id="preview-modal-download" style="margin-left: 16px; padding: 8px 16px;">
+          <i class="bi bi-download"></i> Descargar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal" id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001; align-items: center; justify-content: center;">
+    <div style="background: var(--surface); border-radius: 20px; width: 100%; max-width: 400px; margin: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+      <!-- Confirm state -->
+      <div id="delete-confirm-content">
+        <div style="padding: 24px; text-align: center;">
+          <div style="width: 64px; height: 64px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i class="bi bi-trash" style="color: #ef4444; font-size: 28px;"></i>
+          </div>
+          <h5 style="margin: 0 0 8px; font-size: 20px; font-weight: 600;">¿Eliminar archivo?</h5>
+          <p style="margin: 0; color: var(--text-muted); font-size: 14px;">Estás a punto de eliminar:</p>
+        </div>
+        
+        <div style="padding: 0 24px 16px;">
+          <div style="background: var(--surface-hover); border-radius: 12px; padding: 16px; text-align: center;">
+            <div id="delete-filename" style="font-weight: 600; font-size: 14px; margin-bottom: 4px; word-break: break-all;"></div>
+            <div id="delete-filesize" style="font-size: 12px; color: var(--text-muted);"></div>
+          </div>
+        </div>
+        
+        <div style="padding: 16px 24px 24px; display: flex; gap: 12px; justify-content: center;">
+          <button onclick="window.closeDeleteModal()" style="flex: 1; padding: 12px 24px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; font-weight: 500;">Cancelar</button>
+          <button id="confirmDeleteBtn" style="flex: 1; padding: 12px 24px; border: none; border-radius: 10px; background: #ef4444; color: white; cursor: pointer; font-weight: 500;">
+            <i class="bi bi-trash"></i> Eliminar
+          </button>
+        </div>
+      </div>
+      
+      <!-- Loading state -->
+      <div id="delete-loading-content" style="display: none; padding: 40px; text-align: center;">
+        <div style="width: 64px; height: 64px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; animation: pulse 1s infinite;">
+          <i class="bi bi-trash" style="color: #ef4444; font-size: 28px;"></i>
+        </div>
+        <h5 style="margin: 0 0 8px; font-size: 20px; font-weight: 600;">Eliminando...</h5>
+        <p id="delete-loading-filename" style="margin: 0; color: var(--text-muted); font-size: 14px; font-weight: 500; word-break: break-all;"></p>
+      </div>
+    </div>
+  </div>
+
   <style>
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.98); }
+    }
     .stat-card { padding: 24px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }
     .btn-secondary { padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; }
+    
+    /* Notification styles */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10002;
+      animation: slideIn 0.3s ease;
+    }
+    .notification-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
+    }
+    .notification-success .notification-content {
+      border-left: 4px solid #22c55e;
+    }
+    .notification-success i {
+      color: #22c55e;
+      font-size: 20px;
+    }
+    .notification-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Stub functions - must be defined BEFORE sidebar renders -->
+  <script>
+    window.filesController = null; // Will be set by main script
+    window.openUploadModal = function() { 
+      console.log('stub openUploadModal called');
+      if (window.filesController) window.filesController.openUploadModal(); 
+    };
+    window.closeUploadModal = function() {
+      if (window.filesController) window.filesController.closeUploadModal();
+    };
+    window.uploadFiles = function() {};
+    window.toggleView = function() {
+      if (window.filesController) window.filesController.toggleView();
+    };
+    window.downloadSelected = function() {
+      if (window.filesController) window.filesController.downloadSelected();
+    };
+    window.deleteSelected = function() {
+      if (window.filesController) window.filesController.deleteSelected();
+    };
+    window.shareSelected = function() {
+      if (window.filesController) window.filesController.shareSelected();
+    };
+    window.openFolderModal = function() {
+      document.getElementById('folderModal').style.display = 'flex';
+    };
+    window.closeFolderModal = function() {
+      document.getElementById('folderModal').style.display = 'none';
+    };
+    window.closePreviewModal = function() {
+      document.getElementById('previewModal').style.display = 'none';
+    };
+    window.closeDeleteModal = function() {
+      document.getElementById('deleteModal').style.display = 'none';
+    };
+  </script>
   
   <!-- Sidebar Component -->
   <script type="module" src="../../shared/components/sidebar.js"></script>
@@ -151,26 +347,83 @@
     class FilesController {
       constructor() {
         this.files = [];
+        this.folders = [];
+        this.currentFolderId = undefined;  // Use undefined instead of null
+        this.currentFolderName = null;
+        this.folderPath = [];
         this.selectedFile = null;
         this.viewMode = 'grid';
+        
+        // Clear any stored folder from localStorage
+        localStorage.removeItem('currentFolderId');
       }
 
       async init() {
         console.log('=== Files Controller Init ===');
+        console.log('Current folder ID:', this.currentFolderId);
         await this.loadFiles();
+        await this.loadFolders();
+        await this.renderFiles();
         this.setupEventListeners();
+      }
+
+      async loadFolders() {
+        try {
+          console.log('Loading folders for parent:', this.currentFolderId);
+          const { supabase } = await import('../../shared/services/supabaseClient.js');
+          
+          let query = supabase
+            .from('folders')
+            .select('*, profiles(username, full_name)')
+            .order('created_at', { ascending: false });
+          
+          // Filter by parent folder - check for both null and undefined
+          if (this.currentFolderId !== null && this.currentFolderId !== undefined && this.currentFolderId) {
+            query = query.eq('parent_id', this.currentFolderId);
+          } else {
+            query = query.is('parent_id', null);
+          }
+          
+          const { data: folders, error } = await query;
+          
+          if (error) throw error;
+          this.folders = folders || [];
+          console.log('Folders loaded:', this.folders.length);
+        } catch (error) {
+          console.error('Error loading folders:', error);
+          this.folders = [];
+        }
       }
 
       async loadFiles() {
         try {
-          const files = await fileService.list(100);
-          this.files = Array.isArray(files) ? files : [];
+          console.log('Loading files for folder:', this.currentFolderId);
+          const { supabase } = await import('../../shared/services/supabaseClient.js');
+          
+          let query = supabase
+            .from('documents')
+            .select('*, profiles(username, full_name)')
+            .eq('is_deleted', false)
+            .order('uploaded_at', { ascending: false });
+          
+          // Filter by folder - check for both null and undefined
+          if (this.currentFolderId !== null && this.currentFolderId !== undefined && this.currentFolderId) {
+            query = query.eq('folder_id', this.currentFolderId);
+          } else {
+            query = query.is('folder_id', null);
+          }
+          
+          const { data: files, error } = await query.limit(100);
+          
+          if (error) throw error;
+          this.files = files || [];
           console.log('Files loaded:', this.files.length);
         } catch (error) {
           console.error('Error loading files:', error);
           this.files = [];
         }
         this.renderFiles();
+        this.renderBreadcrumb();
         this.updateStats();
         
         // Update sidebar
@@ -213,15 +466,49 @@
         if (!container) return;
         
         container.innerHTML = '';
+        
         Array.from(files).forEach(file => {
+          const isImage = file.type.startsWith('image/');
+          const isPDF = file.type === 'application/pdf';
+          
+          let previewHtml = '';
+          
+          if (isImage) {
+            // Create thumbnail for images
+            const objectUrl = URL.createObjectURL(file);
+            previewHtml = `
+              <div style="width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0;">
+                <img src="${objectUrl}" style="width: 100%; height: 100%; object-fit: cover;" onload="URL.revokeObjectURL('${objectUrl}')">
+              </div>
+            `;
+          } else if (isPDF) {
+            previewHtml = `
+              <div style="width: 48px; height: 48px; border-radius: 8px; background: #fee2e2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="bi bi-file-earmark-pdf" style="color: #ef4444; font-size: 24px;"></i>
+              </div>
+            `;
+          } else if (file.type.includes('word') || file.type.includes('document')) {
+            previewHtml = `
+              <div style="width: 48px; height: 48px; border-radius: 8px; background: #dbeafe; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="bi bi-file-earmark-word" style="color: #3b82f6; font-size: 24px;"></i>
+              </div>
+            `;
+          } else {
+            previewHtml = `
+              <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="bi bi-file-earmark" style="color: var(--text-muted); font-size: 24px;"></i>
+              </div>
+            `;
+          }
+          
           const div = document.createElement('div');
-          div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--surface-hover); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border);';
+          div.style.cssText = 'display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--surface-hover); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border);';
           div.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <i class="bi bi-file-earmark" style="color: var(--primary-color);"></i>
-              <span style="font-size: 13px; font-weight: 500;">${file.name}</span>
+            ${previewHtml}
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${this.formatSize(file.size)}</div>
             </div>
-            <span style="font-size: 12px; color: var(--text-muted);">${this.formatSize(file.size)}</span>
           `;
           container.appendChild(div);
         });
@@ -234,16 +521,51 @@
         const files = fileInput?.files;
         if (!files || files.length === 0) return;
 
+        const uploadBtn = document.getElementById('uploadBtn');
+        const selectedFilesDiv = document.getElementById('selectedFiles');
+        
+        // Prevent multiple clicks
+        if (uploadBtn.disabled) return;
+        uploadBtn.disabled = true;
+
         try {
-          for (const file of files) {
-            await fileService.upload(file);
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // Show uploading animation
+            selectedFilesDiv.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); border-radius: 10px; color: white; animation: pulse 1.5s infinite;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div class="spinner-border spinner-border-sm" role="status"></div>
+                  <span style="font-size: 14px; font-weight: 500;">Subiendo: ${file.name}</span>
+                </div>
+                <span style="font-size: 12px; opacity: 0.8;">${i + 1}/${files.length}</span>
+              </div>
+            `;
+            
+            await fileService.upload(file, null, this.currentFolderId);
           }
+          
           this.closeUploadModal();
           await this.loadFiles();
-          alert('Archivos subidos correctamente');
+          
+          // Show success notification
+          const notification = document.createElement('div');
+          notification.className = 'notification notification-success';
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="bi bi-check-circle"></i>
+              <span>${files.length} archivo${files.length > 1 ? 's' : ''} subido${files.length > 1 ? 's' : ''} correctamente</span>
+              <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            </div>
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 4000);
         } catch (error) {
           console.error('Upload error:', error);
           alert('Error al subir: ' + error.message);
+        } finally {
+          uploadBtn.disabled = false;
         }
       }
 
@@ -251,41 +573,302 @@
         const container = document.getElementById('files-grid');
         if (!container) return;
 
-        if (this.files.length === 0) {
+        if (this.files.length === 0 && this.folders.length === 0) {
           container.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
               <i class="bi bi-folder2-open" style="font-size: 64px; margin-bottom: 16px; display: block;"></i>
-              <p style="font-size: 16px; margin-bottom: 8px;">No hay archivos</p>
-              <button class="btn-primary" onclick="window.openUploadModal()">
+              <p style="font-size: 16px; margin-bottom: 8px;">No hay archivos ni carpetas</p>
+              <button class="btn-primary" id="btn-upload-first">
                 <i class="bi bi-plus-lg"></i> Subir primer archivo
               </button>
             </div>`;
+          
+          // Add event listener for upload button
+          setTimeout(() => {
+            const uploadBtn = document.getElementById('btn-upload-first');
+            if (uploadBtn) uploadBtn.onclick = () => this.openUploadModal();
+          }, 0);
           return;
         }
 
-        container.innerHTML = this.files.map(file => {
-          const iconClass = this.getFileIconClass(file.file_type);
+        // Render folders first
+        let html = this.folders.map(folder => {
+          const createdBy = folder.profiles?.username || folder.profiles?.full_name || 'Usuario';
           return `
-            <div class="file-card" onclick="window.filesController.selectFile('${file.id}')" data-file-id="${file.id}">
-              <div class="file-icon ${iconClass}">
-                <i class="bi ${this.getFileIcon(file.file_type)}"></i>
+            <div class="file-card" data-folder-id="${folder.id}" style="cursor: pointer;">
+              <div class="file-icon" style="background: var(--warning);">
+                <i class="bi bi-folder-fill"></i>
               </div>
-              <div class="file-name">${file.filename}</div>
-              <div class="file-meta">${this.formatSize(file.size)} • ${this.formatDate(file.uploaded_at)}</div>
+              <div class="file-name">${folder.name}</div>
+              <div class="file-meta">
+                <span style="display: flex; align-items: center; gap: 4px;">
+                  <i class="bi bi-person" style="font-size: 11px;"></i>
+                  ${createdBy}
+                </span>
+                <span>•</span>
+                ${this.formatDate(folder.created_at)}
+              </div>
               <div class="file-actions">
-                <button class="btn-icon" style="width: 28px; height: 28px;" onclick="event.stopPropagation(); window.filesController.downloadFile('${file.id}')">
-                  <i class="bi bi-download" style="font-size: 12px;"></i>
-                </button>
-                <button class="btn-icon" style="width: 28px; height: 28px;" onclick="event.stopPropagation(); window.filesController.deleteFile('${file.id}')">
+                <button class="btn-icon btn-delete-folder" data-folder-id="${folder.id}" style="width: 28px; height: 28px;" title="Eliminar carpeta">
                   <i class="bi bi-trash" style="font-size: 12px;"></i>
                 </button>
               </div>
             </div>
           `;
         }).join('');
+
+        // Then render files
+        html += this.files.map(file => {
+          const iconClass = this.getFileIconClass(file.file_type);
+          const uploadedBy = file.profiles?.username || file.profiles?.full_name || 'Usuario';
+          return `
+            <div class="file-card" data-file-id="${file.id}">
+              <div class="file-icon ${iconClass}">
+                <i class="bi ${this.getFileIcon(file.file_type)}"></i>
+              </div>
+              <div class="file-name">${file.filename}</div>
+              <div class="file-meta">
+                <span style="display: flex; align-items: center; gap: 4px;">
+                  <i class="bi bi-person" style="font-size: 11px;"></i>
+                  ${uploadedBy}
+                </span>
+                <span>•</span>
+                ${this.formatSize(file.size)}
+                <span>•</span>
+                ${this.formatDate(file.uploaded_at)}
+              </div>
+              <div class="file-actions">
+                <button class="btn-icon btn-download-file" data-file-id="${file.id}">
+                  <i class="bi bi-download" style="font-size: 12px;"></i>
+                </button>
+                <button class="btn-icon btn-delete-file" data-file-id="${file.id}">
+                  <i class="bi bi-trash" style="font-size: 12px;"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.innerHTML = html;
+        
+        // Add event delegation for all cards and buttons
+        container.addEventListener('click', (e) => {
+          // Check if clicked on delete folder button
+          const deleteFolderBtn = e.target.closest('.btn-delete-folder');
+          if (deleteFolderBtn) {
+            e.stopPropagation();
+            const folderId = deleteFolderBtn.dataset.folderId;
+            this.deleteFolder(folderId);
+            return;
+          }
+          
+          // Check if clicked on delete file button
+          const deleteFileBtn = e.target.closest('.btn-delete-file');
+          if (deleteFileBtn) {
+            e.stopPropagation();
+            const fileId = deleteFileBtn.dataset.fileId;
+            this.deleteFile(fileId);
+            return;
+          }
+          
+          // Check if clicked on download file button
+          const downloadFileBtn = e.target.closest('.btn-download-file');
+          if (downloadFileBtn) {
+            e.stopPropagation();
+            const fileId = downloadFileBtn.dataset.fileId;
+            this.downloadFile(fileId);
+            return;
+          }
+          
+          // Check if clicked on folder card
+          const folderCard = e.target.closest('.file-card[data-folder-id]');
+          if (folderCard) {
+            const folderId = folderCard.dataset.folderId;
+            this.openFolder(folderId);
+            return;
+          }
+          
+          // Check if clicked on file card
+          const fileCard = e.target.closest('.file-card[data-file-id]');
+          if (fileCard) {
+            const fileId = fileCard.dataset.fileId;
+            this.selectFile(fileId);
+          }
+        });
+      }
+
+      async openFolder(folderId) {
+        const folder = this.folders.find(f => f.id === folderId);
+        if (!folder) return;
+        
+        // Add to path
+        this.folderPath.push({ id: folder.id, name: folder.name });
+        this.currentFolderId = folder.id;
+        this.currentFolderName = folder.name;
+        
+        // Reload contents
+        await this.loadFolders();
+        await this.loadFiles();
+      }
+
+      navigateToFolder(folderId) {
+        if (folderId === null) {
+          // Go to root
+          this.currentFolderId = null;
+          this.currentFolderName = null;
+          this.folderPath = [];
+        } else {
+          // Find folder in path and go to that index
+          const index = this.folderPath.findIndex(f => f.id === folderId);
+          if (index !== -1) {
+            this.folderPath = this.folderPath.slice(0, index + 1);
+            this.currentFolderId = folderId;
+            this.currentFolderName = this.folderPath[index].name;
+          }
+        }
+        
+        this.loadFolders();
+        this.loadFiles();
+      }
+
+      renderBreadcrumb() {
+        const breadcrumb = document.getElementById('breadcrumb');
+        if (!breadcrumb) return;
+        
+        if (this.folderPath.length === 0) {
+          breadcrumb.innerHTML = `
+            <a href="#" onclick="window.filesController.navigateToFolder(null); return false;" style="color: var(--primary-color); text-decoration: none;">
+              <i class="bi bi-house"></i> Inicio
+            </a>
+          `;
+          return;
+        }
+        
+        let html = `
+          <a href="#" onclick="window.filesController.navigateToFolder(null); return false;" style="color: var(--primary-color); text-decoration: none;">
+            <i class="bi bi-house"></i> Inicio
+          </a>
+        `;
+        
+        this.folderPath.forEach((folder, index) => {
+          const isLast = index === this.folderPath.length - 1;
+          html += `
+            <i class="bi bi-chevron-right" style="font-size: 10px; color: var(--text-muted);"></i>
+          `;
+          if (isLast) {
+            html += `<span style="color: var(--text-primary); font-weight: 500;">${folder.name}</span>`;
+          } else {
+            html += `
+              <a href="#" onclick="window.filesController.navigateToFolder('${folder.id}'); return false;" style="color: var(--primary-color); text-decoration: none;">
+                ${folder.name}
+              </a>
+            `;
+          }
+        });
+        
+        breadcrumb.innerHTML = html;
+      }
+
+      async deleteFolder(folderId) {
+        console.log('deleteFolder called:', folderId);
+        
+        // Find the folder to get details - folder IDs are UUIDs, not numbers
+        const folder = this.folders.find(f => f.id === folderId);
+        console.log('Folder found:', folder);
+        console.log('Available folders:', this.folders);
+        
+        if (!folder) return;
+        
+        // Show custom delete modal
+        const modal = document.getElementById('deleteModal');
+        const filenameEl = document.getElementById('delete-filename');
+        const sizeEl = document.getElementById('delete-filesize');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        
+        // Change title for folder
+        filenameEl.textContent = folder.name;
+        sizeEl.textContent = 'Carpeta';
+        
+        // Store folder ID and name for deletion
+        modal.dataset.folderId = folderId;
+        modal.dataset.foldername = folder.name;
+        
+        // Show modal
+        modal.style.display = 'flex';
+        
+        // Set up confirm button for folder
+        confirmBtn.onclick = async () => {
+          const foldername = modal.dataset.foldername;
+          await this.confirmDeleteFolder(folderId, foldername);
+        };
+      }
+
+      async confirmDeleteFolder(folderId, foldername) {
+        const modal = document.getElementById('deleteModal');
+        const confirmContent = document.getElementById('delete-confirm-content');
+        const loadingContent = document.getElementById('delete-loading-content');
+        const loadingFilename = document.getElementById('delete-loading-filename');
+        
+        // Show loading state with folder name
+        confirmContent.style.display = 'none';
+        loadingContent.style.display = 'block';
+        loadingFilename.textContent = foldername;
+        
+        try {
+          const { supabase } = await import('../../shared/services/supabaseClient.js');
+          
+          // First, delete all files inside the folder (soft delete)
+          const { error: filesError } = await supabase
+            .from('documents')
+            .update({ is_deleted: true })
+            .eq('folder_id', folderId);
+          
+          if (filesError) throw filesError;
+          
+          // Also delete any subfolders (this will cascade delete their files due to ON DELETE CASCADE)
+          const { error: subfoldersError } = await supabase
+            .from('folders')
+            .delete()
+            .eq('parent_id', folderId);
+          
+          if (subfoldersError) throw subfoldersError;
+          
+          // Now delete the folder itself
+          const { error } = await supabase.from('folders').delete().eq('id', folderId);
+          if (error) throw error;
+          
+          await this.loadFolders();
+          await this.loadFiles();
+          this.renderFiles();
+          
+          // Close modal
+          modal.style.display = 'none';
+          confirmContent.style.display = 'block';
+          loadingContent.style.display = 'none';
+          
+          // Show success notification
+          const notification = document.createElement('div');
+          notification.className = 'notification notification-success';
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="bi bi-check-circle"></i>
+              <span>Carpeta y archivos eliminados correctamente</span>
+              <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            </div>
+          `;
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 4000);
+        } catch (error) {
+          console.error('Error deleting folder:', error);
+          confirmContent.style.display = 'block';
+          loadingContent.style.display = 'none';
+          alert('Error al eliminar: ' + error.message);
+        }
       }
 
       selectFile(fileId) {
+        console.log('selectFile called with:', fileId, 'type:', typeof fileId);
+        
         document.querySelectorAll('.file-card').forEach(card => {
           card.style.borderColor = 'var(--border)';
           card.style.boxShadow = 'none';
@@ -297,16 +880,152 @@
           card.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
         }
         
+        // Find file - file IDs are UUIDs, not numbers
         const file = this.files.find(f => f.id === fileId);
-        if (!file) return;
+        console.log('File found:', file, 'files length:', this.files.length);
+        
+        if (!file) {
+          console.error('No file found - ID:', fileId);
+          return;
+        }
         
         this.selectedFile = file;
-        document.getElementById('preview-name').textContent = file.filename;
-        document.getElementById('preview-meta').textContent = this.formatSize(file.size) + ' • ' + this.formatDate(file.uploaded_at);
         
-        document.getElementById('btn-download').disabled = false;
-        document.getElementById('btn-delete').disabled = false;
-        document.getElementById('btn-share').disabled = false;
+        // Update preview sidebar if elements exist
+        const previewNameEl = document.getElementById('preview-name');
+        const previewMetaEl = document.getElementById('preview-meta');
+        if (previewNameEl) previewNameEl.textContent = file.filename;
+        if (previewMetaEl) previewMetaEl.textContent = this.formatSize(file.size) + ' • ' + this.formatDate(file.uploaded_at);
+        
+        // Handle preview in sidebar
+        this.showPreview(file);
+        
+        // Also open preview modal automatically
+        this.openPreviewModal(file);
+        
+        const btnDownload = document.getElementById('btn-download');
+        const btnDelete = document.getElementById('btn-delete');
+        const btnShare = document.getElementById('btn-share');
+        if (btnDownload) btnDownload.disabled = false;
+        if (btnDelete) btnDelete.disabled = false;
+        if (btnShare) btnShare.disabled = false;
+      }
+
+      openPreviewModal(file) {
+        const modal = document.getElementById('previewModal');
+        const loadingEl = document.getElementById('preview-loading');
+        const imageEl = document.getElementById('preview-modal-image');
+        const pdfEl = document.getElementById('preview-modal-pdf');
+        const filenameEl = document.getElementById('preview-modal-filename');
+        const downloadBtn = document.getElementById('preview-modal-download');
+        
+        const fileType = file.file_type || '';
+        const filePath = file.file_path;
+        
+        if (!filePath) return;
+        
+        // Show loading spinner first
+        loadingEl.style.display = 'flex';
+        imageEl.style.display = 'none';
+        pdfEl.style.display = 'none';
+        
+        filenameEl.textContent = file.filename;
+        
+        // Set download action
+        downloadBtn.onclick = () => this.downloadFile(file.id);
+        
+        // Show appropriate preview
+        if (fileType.startsWith('image/')) {
+          imageEl.src = filePath;
+          imageEl.style.display = 'block';
+        } else if (fileType === 'application/pdf' || (file.filename && file.filename.toLowerCase().endsWith('.pdf'))) {
+          pdfEl.src = filePath;
+          pdfEl.style.display = 'block';
+        } else {
+          // For other files
+          loadingEl.style.display = 'none';
+          alert('Vista previa no disponible para este tipo de archivo. Usa el botón descargar.');
+          return;
+        }
+        
+        modal.style.display = 'flex';
+      }
+
+      closePreviewModal(event) {
+        // Close if clicking backdrop or close button
+        if (!event || event.target.id === 'previewModal' || event.target.onclick) {
+          document.getElementById('previewModal').style.display = 'none';
+        }
+      }
+
+      showPreview(file) {
+        console.log('Showing preview for:', file.filename, 'Type:', file.file_type, 'Path:', file.file_path);
+        
+        const imageContainer = document.getElementById('preview-image-container');
+        const pdfContainer = document.getElementById('preview-pdf-container');
+        const iconContainer = document.getElementById('preview-icon-container');
+        const imageEl = document.getElementById('preview-image');
+        const pdfEl = document.getElementById('preview-pdf');
+        
+        // Debug - check if containers exist
+        console.log('Containers exist - image:', !!imageContainer, 'pdf:', !!pdfContainer, 'icon:', !!iconContainer);
+        
+        // Hide all first
+        if (imageContainer) imageContainer.style.display = 'none';
+        if (pdfContainer) pdfContainer.style.display = 'none';
+        if (iconContainer) iconContainer.style.display = 'flex';
+        
+        const fileType = file.file_type || '';
+        const filePath = file.file_path;
+        
+        if (!filePath) {
+          console.warn('No file_path found for:', file.filename);
+          return;
+        }
+        
+        // Check if image
+        if (fileType.startsWith('image/')) {
+          console.log('Showing image preview');
+          if (imageContainer) imageContainer.style.display = 'block';
+          if (iconContainer) iconContainer.style.display = 'none';
+          if (imageEl) imageEl.src = filePath;
+          return;
+        }
+        
+        // Check if PDF
+        if (fileType === 'application/pdf' || (file.filename && file.filename.toLowerCase().endsWith('.pdf'))) {
+          console.log('Showing PDF preview');
+          if (pdfContainer) pdfContainer.style.display = 'block';
+          if (iconContainer) iconContainer.style.display = 'none';
+          if (pdfEl) pdfEl.src = filePath;
+          return;
+        }
+        
+        // For other files, show appropriate icon
+        let iconClass = 'bi-file-earmark';
+        let iconColor = 'var(--primary-color)';
+        
+        if (fileType.includes('word') || fileType.includes('document')) {
+          iconClass = 'bi-file-earmark-word';
+          iconColor = '#3b82f6';
+        } else if (fileType.includes('spreadsheet') || fileType.includes('excel')) {
+          iconClass = 'bi-file-earmark-spreadsheet';
+          iconColor = '#22c55e';
+        } else if (fileType.includes('presentation') || fileType.includes('powerpoint')) {
+          iconClass = 'bi-file-earmark-ppt';
+          iconColor = '#f97316';
+        } else if (fileType.includes('video')) {
+          iconClass = 'bi-file-earmark-play';
+          iconColor = '#ec4899';
+        } else if (fileType.includes('audio')) {
+          iconClass = 'bi-file-earmark-music';
+          iconColor = '#8b5cf6';
+        } else if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('archive')) {
+          iconClass = 'bi-file-earmark-zip';
+          iconColor = '#eab308';
+        }
+        
+        iconContainer.innerHTML = `<i class="bi ${iconClass}" style="color: ${iconColor}; font-size: 48px;"></i>`;
       }
 
       updateStats() {
@@ -364,6 +1083,14 @@
 
       openUploadModal() {
         document.getElementById('uploadModal').style.display = 'flex';
+        
+        // Show current folder
+        const folderNameEl = document.getElementById('uploadFolderName');
+        if (this.currentFolderName) {
+          folderNameEl.textContent = this.currentFolderName;
+        } else {
+          folderNameEl.textContent = 'Raíz';
+        }
       }
 
       closeUploadModal() {
@@ -404,12 +1131,56 @@
       }
 
       async deleteFile(fileId) {
-        if (!confirm('¿Eliminar este archivo?')) return;
+        // Find the file to get details - file IDs are UUIDs, not numbers
+        const file = this.files.find(f => f.id === fileId);
+        if (!file) return;
+        
+        // Show custom delete modal
+        const modal = document.getElementById('deleteModal');
+        const filenameEl = document.getElementById('delete-filename');
+        const sizeEl = document.getElementById('delete-filesize');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        
+        filenameEl.textContent = file.filename;
+        sizeEl.textContent = this.formatSize(file.size);
+        
+        // Store file ID and name for deletion
+        modal.dataset.fileId = fileId;
+        modal.dataset.filename = file.filename;
+        
+        // Show modal
+        modal.style.display = 'flex';
+        
+        // Set up confirm button
+        confirmBtn.onclick = async () => {
+          const filename = modal.dataset.filename;
+          await this.confirmDelete(fileId, filename);
+        };
+      }
+
+      async confirmDelete(fileId, filename) {
+        const modal = document.getElementById('deleteModal');
+        const confirmContent = document.getElementById('delete-confirm-content');
+        const loadingContent = document.getElementById('delete-loading-content');
+        const loadingFilename = document.getElementById('delete-loading-filename');
+        
+        // Show loading state with filename
+        confirmContent.style.display = 'none';
+        loadingContent.style.display = 'block';
+        loadingFilename.textContent = filename;
+        
         try {
           await fileService.delete(fileId);
           await this.loadFiles();
+          
+          // Close modal
+          modal.style.display = 'none';
+          confirmContent.style.display = 'block';
+          loadingContent.style.display = 'none';
         } catch (error) {
           console.error('Delete error:', error);
+          confirmContent.style.display = 'block';
+          loadingContent.style.display = 'none';
           alert('Error al eliminar: ' + error.message);
         }
       }
@@ -439,6 +1210,102 @@
     window.downloadSelected = () => window.filesController.downloadSelected();
     window.deleteSelected = () => window.filesController.deleteSelected();
     window.shareSelected = () => window.filesController.shareSelected();
+    
+    // Folder functions
+    window.openFolderModal = () => {
+      document.getElementById('folderModal').style.display = 'flex';
+      document.getElementById('folderName').value = '';
+      document.getElementById('folderError').style.display = 'none';
+      document.getElementById('folderName').focus();
+    };
+    
+    window.closeFolderModal = () => {
+      document.getElementById('folderModal').style.display = 'none';
+    };
+    
+    window.closePreviewModal = (event) => {
+      if (!event || event.target.id === 'previewModal') {
+        document.getElementById('previewModal').style.display = 'none';
+      }
+    };
+    
+    window.closeDeleteModal = () => {
+      document.getElementById('deleteModal').style.display = 'none';
+      // Reset to confirm state for next time
+      document.getElementById('delete-confirm-content').style.display = 'block';
+      document.getElementById('delete-loading-content').style.display = 'none';
+    };
+    
+    window.createFolder = async () => {
+      const folderName = document.getElementById('folderName').value.trim();
+      const errorEl = document.getElementById('folderError');
+      const createBtn = document.getElementById('createFolderBtn');
+      
+      if (!folderName) {
+        errorEl.textContent = 'El nombre de la carpeta es obligatorio';
+        errorEl.style.display = 'block';
+        return;
+      }
+      
+      try {
+        createBtn.disabled = true;
+        createBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creando...';
+        
+        const { supabase } = await import('../../shared/services/supabaseClient.js');
+        const { authService } = await import('../../shared/services/authServiceSupabase.js');
+        
+        const user = await authService.getCurrentUser();
+        if (!user) throw new Error('Debes iniciar sesión para crear carpetas');
+        
+        // Get current folder ID (for subfolders)
+        const currentFolderId = window.filesController?.currentFolderId || null;
+        
+        const { data, error } = await supabase
+          .from('folders')
+          .insert({
+            name: folderName,
+            created_by: user.id,
+            parent_id: currentFolderId
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        window.closeFolderModal();
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'notification notification-success';
+        notification.innerHTML = `
+          <div class="notification-content">
+            <i class="bi bi-check-circle"></i>
+            <span>Carpeta "${folderName}" creada correctamente</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 4000);
+        
+        // Recargar carpetas y mostrar
+        if (window.filesController.loadFolders) {
+          await window.filesController.loadFolders();
+          window.filesController.renderFiles();
+        }
+        
+      } catch (error) {
+        console.error('Error creating folder:', error);
+        errorEl.textContent = error.message || 'Error al crear la carpeta';
+        errorEl.style.display = 'block';
+      } finally {
+        createBtn.disabled = false;
+        createBtn.innerHTML = '<i class="bi bi-folder-plus"></i> Crear';
+      }
+    };
   </script>
+  
+  <!-- Sidebar Component - Load after main script -->
+  <script type="module" src="../../shared/components/sidebar.js"></script>
+  <script type="module" src="../../shared/components/rightSidebar.js"></script>
 </body>
 </html>

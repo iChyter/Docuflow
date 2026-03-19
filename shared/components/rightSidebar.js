@@ -37,7 +37,7 @@ class RightSidebarComponent {
       ],
       files: [
         { icon: 'bi-cloud-upload', text: 'Subir Archivo', onclick: 'window.openUploadModal()', primary: true },
-        { icon: 'bi-folder', text: 'Nueva Carpeta', onclick: 'alert("Próximamente")' }
+        { icon: 'bi-folder-plus', text: 'Nueva Carpeta', onclick: 'window.openFolderModal()' }
       ],
       comments: [
         { icon: 'bi-plus-lg', text: 'Nuevo Comentario', onclick: 'window.openCommentModal()', primary: true }
@@ -49,9 +49,7 @@ class RightSidebarComponent {
         { icon: 'bi-person-plus', text: 'Crear Usuario', onclick: 'window.openCreateUserModal()', primary: true, id: 'btn-create-user-action' }
       ],
       export: [
-        { icon: 'bi-file-earmark-pdf', text: 'Exportar PDF', onclick: 'window.exportPDF()' },
-        { icon: 'bi-file-earmark-excel', text: 'Exportar Excel', onclick: 'window.exportExcel()' },
-        { icon: 'bi-file-earmark-spreadsheet', text: 'Exportar CSV', onclick: 'window.exportCSV()' }
+        // Los botones de export están en el HTML de la página, no aquí
       ],
       settings: [
         { icon: 'bi-check-lg', text: 'Guardar Perfil', onclick: 'window.saveProfile()', primary: true },
@@ -216,11 +214,11 @@ class RightSidebarComponent {
 
   async render() {
     const actions = this.getActions();
-    
-    // Create buttons HTML (only for pages that don't have their own sidebar buttons)
-    // Skip dashboard (has custom content) and comments (has own buttons in HTML)
+
+    // ✅ Renderizar botones de acción en TODAS las páginas (excepto las que tienen sus propios botones)
+    // Skip comments y export porque tienen sus propios botones en el HTML
     let buttonsHtml = '';
-    if (this.currentPage !== 'dashboard' && this.currentPage !== 'comments' && actions.length > 0) {
+    if (this.currentPage !== 'comments' && this.currentPage !== 'export' && this.currentPage !== 'dashboard' && actions.length > 0) {
       buttonsHtml = `
         <div class="sidebar-section" style="border-bottom: 1px solid var(--border); margin-bottom: 16px; padding-bottom: 16px;">
           <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -240,22 +238,77 @@ class RightSidebarComponent {
       `;
     }
 
-    // Get page-specific extras (like logs and storage for dashboard)
-    const extras = await this.renderDashboardExtras();
-    
+    // ✅ Solo cargar datos pesados de dashboard SI es dashboard
+    let extras = '';
+    if (this.currentPage === 'dashboard') {
+      console.log('[RightSidebar] Cargando datos de dashboard...');
+      extras = await this.renderDashboardExtras();
+    }
+
     const html = buttonsHtml + extras;
 
     // Try to find existing right sidebar or create new one
     let sidebar = document.getElementById('right-sidebar-container');
-    
+
+    console.log('[RightSidebar] Insertando HTML en:', sidebar ? 'right-sidebar-container' : 'buscando .right-sidebar');
+
     if (sidebar) {
-      sidebar.insertAdjacentHTML('afterbegin', html);
+      // Limpiar contenido anterior y agregar nuevo
+      sidebar.innerHTML = html;
     } else {
       const existingSidebar = document.querySelector('.right-sidebar');
       if (existingSidebar) {
-        existingSidebar.insertAdjacentHTML('afterbegin', html);
+        existingSidebar.innerHTML = html;
+      } else {
+        console.warn('[RightSidebar] No se encontró contenedor para la barra derecha');
       }
     }
+
+    // Add toggle button for mobile right sidebar
+    this.addMobileToggle();
+  }
+
+  addMobileToggle() {
+    // Check if toggle button already exists
+    if (document.querySelector('.mobile-right-toggle')) {
+      return;
+    }
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'mobile-right-toggle';
+    toggleBtn.innerHTML = '<i class="bi bi-layout-sidebar"></i>';
+    toggleBtn.style.cssText = `
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      width: 48px;
+      height: 48px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    `;
+
+    toggleBtn.onclick = () => this.toggleRightSidebar();
+    document.body.appendChild(toggleBtn);
+  }
+
+  toggleRightSidebar() {
+    const sidebar = document.getElementById('right-sidebar-container');
+    const overlay = document.querySelector('.mobile-overlay');
+    const toggleBtn = document.querySelector('.mobile-right-toggle');
+
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+
+    // Update button icon
+    const isOpen = sidebar.classList.contains('open');
+    toggleBtn.innerHTML = isOpen ? '<i class="bi bi-x"></i>' : '<i class="bi bi-layout-sidebar"></i>';
   }
 }
 

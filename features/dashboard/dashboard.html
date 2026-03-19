@@ -6,6 +6,9 @@
   <title>DocuFlow - Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../shared/styles/slothui.css">
+  <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
+  <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
+  <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
   <style>
     .quick-access-grid {
       display: grid;
@@ -175,6 +178,61 @@
             </div>
             <div style="font-size: 32px; font-weight: 700; margin-bottom: 8px;" id="stat-today-activity">0</div>
             <div style="font-size: 13px; color: var(--text-muted);">acciones registradas</div>
+             </div>
+           </div>
+         </div>
+       </div>
+
+      <!-- Storage Section -->
+      <div style="margin-bottom: 32px;">
+        <div class="section-header">
+          <h2 class="section-title">Almacenamiento</h2>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 40px; padding: 24px; background: var(--surface); border-radius: 16px; border: 1px solid var(--border);">
+          <div style="position: relative; width: 120px; height: 120px;">
+            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--border)" stroke-width="3" id="storage-circle"/>
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--primary-color)" stroke-width="3" id="storage-circle-progress" stroke-dasharray="0, 100"/>
+            </svg>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+              <div style="font-size: 18px; font-weight: 700;" id="storage-percentage">0%</div>
+            </div>
+          </div>
+
+          <div style="flex: 1;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;" id="storage-used">0 MB</div>
+            <div style="font-size: 13px; color: var(--text-muted);">de 5 GB disponibles</div>
+
+            <div style="margin-top: 24px;">
+              <div style="display: flex; align-items: center; margin-bottom: 12px; gap: 8px;">
+                <span style="width: 12px; height: 12px; background: var(--success); border-radius: 3px;"></span>
+                <span style="flex: 1; font-size: 13px; color: var(--text-muted);">Documentos</span>
+                <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);" id="storage-docs">0%</span>
+              </div>
+              <div style="display: flex; align-items: center; margin-bottom: 12px; gap: 8px;">
+                <span style="width: 12px; height: 12px; background: var(--primary-color); border-radius: 3px;"></span>
+                <span style="flex: 1; font-size: 13px; color: var(--text-muted);">Imágenes</span>
+                <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);" id="storage-images">0%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 12px; height: 12px; background: var(--warning); border-radius: 3px;"></span>
+                <span style="flex: 1; font-size: 13px; color: var(--text-muted);">Otros</span>
+                <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);" id="storage-others">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Recent Activity Section -->
+      <div>
+        <div class="section-header">
+          <h2 class="section-title">Actividad Reciente</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;" id="recent-activity">
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size: 48px; margin-bottom: 16px;"></i>
+            <p>No hay actividad reciente</p>
           </div>
         </div>
       </div>
@@ -390,9 +448,12 @@
         const othersPercent = totalSize > 0 ? Math.round((othersSize / totalSize) * 100) : 0;
         
         // Update circle chart
-        const circle = document.getElementById('storage-circle');
+        const circle = document.getElementById('storage-circle-progress');
         if (circle) {
-          circle.setAttribute('stroke-dasharray', `${percentage}, 100`);
+          const circumference = 2 * Math.PI * 15.9155;
+          const offset = circumference - (percentage / 100) * circumference;
+          circle.setAttribute('stroke-dasharray', `${circumference} ${circumference}`);
+          circle.setAttribute('stroke-dashoffset', offset);
         }
         
         document.getElementById('storage-percentage').textContent = Math.round(percentage) + '%';

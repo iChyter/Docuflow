@@ -1,0 +1,171 @@
+/* Tablet Styles (768px - 1200px) - Compact layout with both sidebars */
+
+/* Layout */
+.app-container {
+  flex-direction: row;
+}
+
+/* Left Sidebar - More compact */
+.sidebar {
+  width: 240px;
+  transform: translateX(0);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 1000;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-header {
+  padding: 16px 20px;
+}
+
+.sidebar-search {
+  padding: 12px 16px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.main-content {
+  margin-left: 240px;
+  margin-right: 280px;
+  width: calc(100% - 520px);
+}
+
+/* Right Sidebar - More compact */
+.right-sidebar {
+  width: 280px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 999;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.right-sidebar.closed {
+  transform: translateX(280px);
+}
+
+.sidebar-section {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-section-header {
+  margin-bottom: 12px;
+}
+
+.sidebar-section-title {
+  font-size: 13px;
+}
+
+/* Grid layouts - Smaller gaps and cards */
+.file-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.quick-access-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.export-card {
+  padding: 24px;
+  border-radius: 14px;
+}
+
+.export-card h3 {
+  font-size: 16px;
+}
+
+.export-card p {
+  font-size: 13px;
+}
+
+/* Navigation - More compact */
+.nav-section {
+  margin-bottom: 16px;
+}
+
+.nav-item {
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 3px;
+}
+
+.nav-item i {
+  font-size: 18px;
+}
+
+/* Cards and elements */
+.stat-card {
+  padding: 20px;
+  border-radius: 14px;
+}
+
+.file-preview {
+  padding: 20px;
+}
+
+.file-preview-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+}
+
+.file-preview-icon i {
+  font-size: 28px;
+}
+
+/* Buttons - Slightly smaller */
+.btn-primary,
+.btn-secondary {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+/* Section headers */
+.section-title {
+  font-size: 20px;
+}
+
+/* Table - Compact */
+.table-container {
+  font-size: 13px;
+}
+
+.table-container th,
+.table-container td {
+  padding: 10px 12px;
+}
+
+/* Overlay - Hidden on tablet */
+.mobile-overlay {
+  display: none;
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+.mobile-right-toggle {
+  display: none;
+}
+
+/* Badge */
+.badge {
+  font-size: 11px;
+  padding: 2px 6px;
+}

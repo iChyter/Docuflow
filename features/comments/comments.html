@@ -6,6 +6,9 @@
   <title>DocuFlow - Comentarios</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../shared/styles/slothui.css">
+  <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
+  <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
+  <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
 </head>
 <body>
   <div class="app-container">
@@ -174,7 +177,6 @@
     import { commentService } from '../../shared/services/commentServiceSupabase.js';
     import { authService } from '../../shared/services/authServiceSupabase.js';
     import { profileService } from '../../shared/services/profileService.js';
-    import { supabase } from '../../shared/services/supabaseClient.js';
 
     class CommentsController {
       constructor() {
@@ -185,7 +187,6 @@
         this.loading = false;
         this.currentUserId = null;
         this.currentUserRole = null;
-        this.selectedAssignees = [];
       }
 
       async init() {
@@ -228,51 +229,6 @@
         }
       }
 
-      async loadUsersForAssign() {
-        try {
-          const { data: users, error } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, role')
-            .order('username');
-          
-          if (error) throw error;
-
-          const assignSelect = document.getElementById('assignSelect');
-          if (assignSelect) {
-            assignSelect.innerHTML = '<option value="">Seleccionar usuario...</option>';
-            users.forEach(user => {
-              const option = document.createElement('option');
-              option.value = user.id;
-              option.textContent = `${user.username || user.full_name || 'Usuario'} (${user.role})`;
-              assignSelect.appendChild(option);
-            });
-          }
-        } catch (error) {
-          console.error('Error loading users:', error);
-        }
-      }
-
-      async assignComment(assigneeIds) {
-        if (!this.selectedComment) return;
-        
-        if (assigneeIds.length === 0) {
-          alert('Por favor selecciona al menos un usuario');
-          return;
-        }
-
-        try {
-          for (const assigneeId of assigneeIds) {
-            await commentService.assign(this.selectedComment.id, [assigneeId]);
-          }
-          this.closeAssignModal();
-          await this.loadComments();
-          showNotification('Comentario asignado correctamente', 'success');
-        } catch (error) {
-          console.error('Error assigning comment:', error);
-          alert('Error al asignar: ' + error.message);
-        }
-      }
-
       canDelete(comment) {
         if (!this.currentUserId) return false;
         const isOwner = comment.author_id === this.currentUserId || comment.author === this.currentUserId;
@@ -293,7 +249,6 @@
         }
         this.renderComments();
         this.updateStats();
-        await this.loadUsersForAssign();
       }
 
       setupEventListeners() {
@@ -367,12 +322,6 @@
         deleteBtn.disabled = !canDelete;
         deleteBtn.style.opacity = canDelete ? '1' : '0.5';
         deleteBtn.title = canDelete ? 'Eliminar comentario' : 'Solo el autor o un admin pueden eliminar';
-        
-        // Enable assign button for any user (they can assign to others)
-        const assignBtn = document.getElementById('btn-assign-comment');
-        assignBtn.disabled = false;
-        assignBtn.style.opacity = '1';
-        assignBtn.title = 'Asignar comentario';
       }
 
       setFilter(filter) {
@@ -484,67 +433,6 @@
       closeCommentModal() {
         document.getElementById('commentModal').style.display = 'none';
       }
-
-      openAssignModal() {
-        this.selectedAssignees = [];
-        this.updateAssigneesList();
-        document.getElementById('assignModal').style.display = 'flex';
-        document.getElementById('assignSelect').value = '';
-      }
-
-      closeAssignModal() {
-        document.getElementById('assignModal').style.display = 'none';
-        this.selectedAssignees = [];
-        this.updateAssigneesList();
-      }
-
-      addAssignee(userId) {
-        if (!this.selectedAssignees.includes(userId)) {
-          this.selectedAssignees.push(userId);
-          this.updateAssigneesList();
-        }
-      }
-
-      removeAssignee(userId) {
-        this.selectedAssignees = this.selectedAssignees.filter(id => id !== userId);
-        this.updateAssigneesList();
-      }
-
-      updateAssigneesList() {
-        const container = document.getElementById('assignUsersList');
-        if (!container) return;
-
-        if (this.selectedAssignees.length === 0) {
-          container.innerHTML = '<span style="padding: 6px 12px; background: var(--surface-hover); border-radius: 8px; font-size: 12px; color: var(--text-muted);">Selecciona usuarios arriba para agregar</span>';
-          return;
-        }
-
-        container.innerHTML = this.selectedAssignees.map(id => {
-          const user = this.comments.find(c => c.id === id);
-          if (!user) return '';
-          return `
-            <span style="padding: 6px 12px; background: var(--primary-color)20; border-radius: 8px; font-size: 12px; color: var(--primary-color); cursor: pointer; border: 1px solid var(--primary-color);" onclick="window.removeAssignee('${id}')">
-              ${user.author_username || user.author || 'Usuario'}
-              <i class="bi bi-x" style="margin-left: 4px;"></i>
-            </span>
-          `;
-        }).join('');
-      }
-
-      async saveAssignment() {
-        const assignSelect = document.getElementById('assignSelect');
-        const selectedUserId = assignSelect.value;
-
-        if (selectedUserId) {
-          this.addAssignee(selectedUserId);
-        }
-
-        if (this.selectedAssignees.length > 0) {
-          await this.assignComment(this.selectedAssignees);
-        } else {
-          alert('Por favor selecciona al menos un usuario');
-        }
-      }
     }
 
     // Initialize controller
@@ -559,11 +447,6 @@
     window.deleteSelected = () => window.commentsController.deleteSelected();
     window.confirmDelete = () => window.commentsController.confirmDelete();
     window.closeDeleteModal = () => window.commentsController.closeDeleteModal();
-    window.openAssignModal = () => window.commentsController.openAssignModal();
-    window.closeAssignModal = () => window.commentsController.closeAssignModal();
-    window.saveAssignment = () => window.commentsController.saveAssignment();
-    window.addAssignee = (userId) => window.commentsController.addAssignee(userId);
-    window.removeAssignee = (userId) => window.commentsController.removeAssignee(userId);
   </script>
 </body>
 </html>

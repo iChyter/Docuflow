@@ -1,6 +1,7 @@
 // loginControllerSimple.js - Controlador de login con Supabase
 import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification } from '../../shared/utils/uiHelpers.js';
+import { permissionService } from '../../shared/services/permissionService.js';
 
 class SimpleLoginController {
   constructor() {
@@ -56,6 +57,9 @@ class SimpleLoginController {
       if (result && result.user) {
         const user = result.user;
         showNotification(`¡Bienvenido ${user?.full_name || user?.username || 'Usuario'}!`, 'success');
+
+        // ✅ Invalidar caché de rol al iniciar sesión
+        permissionService.invalidateRoleCache();
 
         setTimeout(() => {
           window.location.href = '../dashboard/dashboard.html';

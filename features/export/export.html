@@ -6,6 +6,9 @@
   <title>DocuFlow - Exportar</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../shared/styles/slothui.css">
+  <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
+  <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
+  <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
 </head>
 <body>
   <div class="app-container">
@@ -66,15 +69,41 @@
 
     <!-- Right Sidebar -->
     <aside class="right-sidebar" id="right-sidebar-container">
+      <!-- Botón Exportar Rápido -->
+      <div style="padding: 16px; border-bottom: 1px solid var(--border);">
+        <button class="btn-primary" onclick="window.exportSelected()" style="width: 100%; justify-content: center; gap: 8px; padding: 14px;">
+          <i class="bi bi-download"></i> Exportar Ahora
+        </button>
+      </div>
+      
       <div class="sidebar-section">
         <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Opciones de Exportación</span>
+          <span class="sidebar-section-title">Opciones</span>
+          <i class="bi bi-three-dots btn-more"></i>
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 16px;">
           <div>
+            <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Formato</label>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-secondary export-format-btn active" data-format="pdf" onclick="window.selectFormat('pdf')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="bi bi-file-earmark-pdf" style="color: #ef4444;"></i>
+                <span style="font-size: 13px;">PDF</span>
+              </button>
+              <button class="btn-secondary export-format-btn" data-format="excel" onclick="window.selectFormat('excel')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="bi bi-file-earmark-excel" style="color: #22c55e;"></i>
+                <span style="font-size: 13px;">Excel</span>
+              </button>
+              <button class="btn-secondary export-format-btn" data-format="csv" onclick="window.selectFormat('csv')" style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="bi bi-file-earmark-text" style="color: #6366f1;"></i>
+                <span style="font-size: 13px;">CSV</span>
+              </button>
+            </div>
+          </div>
+          
+          <div>
             <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Tipo de datos</label>
-            <select id="exportDataType" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
+            <select id="exportDataType" onchange="window.updatePreview()" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
               <option value="all">Todos los datos</option>
               <option value="files">Solo archivos</option>
               <option value="users">Solo usuarios</option>
@@ -84,9 +113,33 @@
           
           <div>
             <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Rango de fechas</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="date" id="startDate" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
-              <input type="date" id="endDate" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <input type="date" id="startDate" onchange="window.updatePreview()" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
+              <input type="date" id="endDate" onchange="window.updatePreview()" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Resumen</span>
+        </div>
+        
+        <div class="file-preview" id="export-preview" style="text-align: center; padding: 24px;">
+          <div class="file-preview-icon" style="background: var(--surface-hover); margin-bottom: 16px;">
+            <i class="bi bi-file-earmark-arrow-down" style="color: var(--primary-color); font-size: 32px;"></i>
+          </div>
+          <div class="file-preview-title" id="preview-title" style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">Todos los datos</div>
+          <div class="file-preview-meta" id="preview-format" style="font-size: 13px; color: var(--text-muted);">Formato: PDF</div>
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+              <span>Registros estimados:</span>
+              <span id="preview-count" style="font-weight: 600; color: var(--text-primary);">-</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+              <span>Tamaño aprox.:</span>
+              <span id="preview-size" style="font-weight: 600; color: var(--text-primary);">-</span>
             </div>
           </div>
         </div>
@@ -120,6 +173,32 @@
   <script type="module" src="../../shared/components/sidebar.js"></script>
   <script type="module" src="../../shared/components/rightSidebar.js"></script>
   
+  <style>
+    .export-format-btn {
+      transition: all 0.2s ease;
+    }
+    .export-format-btn:hover {
+      background: var(--surface-hover) !important;
+      border-color: var(--primary-color) !important;
+    }
+    .export-format-btn.active {
+      background: var(--primary-light) !important;
+      border-color: var(--primary-color) !important;
+      color: var(--primary-color);
+    }
+    .export-format-btn.active i {
+      color: var(--primary-color) !important;
+    }
+    .export-card {
+      transition: all 0.3s ease;
+    }
+    .export-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+      border-color: var(--primary-color) !important;
+    }
+  </style>
+
   <script type="module">
     import { authService } from '../../shared/services/authServiceSupabase.js';
 
@@ -127,15 +206,99 @@
       constructor() {
         this.exportHistory = JSON.parse(localStorage.getItem('exportHistory') || '[]');
         this.loading = false;
+        this.selectedFormat = 'pdf';
       }
 
       async init() {
         if (this.loading) return;
         this.loading = true;
         
+        // Set default dates
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        document.getElementById('endDate').valueAsDate = today;
+        document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
+        
+        this.updatePreview();
         this.renderHistory();
         
         this.loading = false;
+      }
+
+      selectFormat(format) {
+        this.selectedFormat = format;
+        
+        // Update button styles
+        document.querySelectorAll('.export-format-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.dataset.format === format) {
+            btn.classList.add('active');
+          }
+        });
+        
+        this.updatePreview();
+      }
+
+      updatePreview() {
+        const dataType = document.getElementById('exportDataType').value;
+        const formatLabels = {
+          'pdf': 'PDF',
+          'excel': 'Excel',
+          'csv': 'CSV'
+        };
+        const dataTypeLabels = {
+          'all': 'Todos los datos',
+          'files': 'Solo archivos',
+          'users': 'Solo usuarios',
+          'logs': 'Solo logs'
+        };
+        
+        // Update preview text
+        document.getElementById('preview-title').textContent = dataTypeLabels[dataType];
+        document.getElementById('preview-format').textContent = `Formato: ${formatLabels[this.selectedFormat]}`;
+        
+        // Update preview icon
+        const iconMap = {
+          'pdf': 'bi-file-earmark-pdf',
+          'excel': 'bi-file-earmark-excel',
+          'csv': 'bi-file-earmark-text'
+        };
+        const iconEl = document.querySelector('#export-preview .file-preview-icon i');
+        if (iconEl) {
+          iconEl.className = `bi ${iconMap[this.selectedFormat]}`;
+        }
+        
+        // Estimate records (mock data for now)
+        const recordEstimates = {
+          'all': '150+',
+          'files': '45',
+          'users': '12',
+          'logs': '93'
+        };
+        document.getElementById('preview-count').textContent = recordEstimates[dataType];
+        
+        // Estimate size
+        const sizeEstimates = {
+          'pdf': { 'all': '~850 KB', 'files': '~320 KB', 'users': '~45 KB', 'logs': '~485 KB' },
+          'excel': { 'all': '~420 KB', 'files': '~180 KB', 'users': '~25 KB', 'logs': '~217 KB' },
+          'csv': { 'all': '~125 KB', 'files': '~65 KB', 'users': '~12 KB', 'logs': '~48 KB' }
+        };
+        document.getElementById('preview-size').textContent = sizeEstimates[this.selectedFormat][dataType];
+      }
+
+      exportSelected() {
+        // Export based on selected format
+        switch(this.selectedFormat) {
+          case 'pdf':
+            this.exportPDF();
+            break;
+          case 'excel':
+            this.exportExcel();
+            break;
+          case 'csv':
+            this.exportCSV();
+            break;
+        }
       }
 
       renderHistory() {
@@ -213,6 +376,9 @@
     window.exportPDF = () => window.exportController.exportPDF();
     window.exportExcel = () => window.exportController.exportExcel();
     window.exportCSV = () => window.exportController.exportCSV();
+    window.selectFormat = (format) => window.exportController.selectFormat(format);
+    window.updatePreview = () => window.exportController.updatePreview();
+    window.exportSelected = () => window.exportController.exportSelected();
     
     // Initialize immediately
     exportController.init();

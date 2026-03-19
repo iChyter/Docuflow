@@ -33,13 +33,13 @@
 .login-title {
   font-size: var(--font-size-3xl);
   font-weight: 700;
-  color: var(--gray-800);
+  color: var(--text-primary);
   margin-bottom: var(--spacing-sm);
 }
 
 .login-subtitle {
   font-size: var(--font-size-lg);
-  color: var(--gray-600);
+  color: var(--text-secondary);
 }
 
 /* Formulario */
@@ -65,7 +65,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--gray-500);
+  color: var(--text-muted);
   cursor: pointer;
   padding: var(--spacing-xs);
   border-radius: var(--border-radius-sm);
@@ -73,8 +73,8 @@
 }
 
 .password-toggle:hover {
-  color: var(--primary-blue);
-  background: var(--gray-100);
+  color: var(--primary-color);
+  background: var(--surface-hover);
 }
 
 /* Botón de login */
@@ -167,8 +167,8 @@
 
 /* Checkbox personalizado */
 .form-check-input:checked {
-  background-color: var(--primary-blue);
-  border-color: var(--primary-blue);
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .form-check-input:focus {
@@ -177,12 +177,12 @@
 
 /* Enlaces */
 a {
-  color: var(--primary-blue);
+  color: var(--primary-color);
   transition: var(--transition-fast);
 }
 
 a:hover {
-  color: var(--secondary-blue);
+  color: var(--primary-light);
   text-decoration: underline !important;
 }
 

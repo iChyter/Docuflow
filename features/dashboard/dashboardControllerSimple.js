@@ -47,7 +47,7 @@ class SimpleDashboardController {
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
         await authService.logout();
-        window.location.href = '../auth/login.html';
+        window.location.href = '../../features/auth/login.html';
       });
     }
   }
@@ -460,7 +460,7 @@ window.showQuickActions = () => {
 // Función global para logout
 window.handleLogout = async () => {
   await authService.logout();
-  window.location.href = '../auth/login.html';
+  window.location.href = '../../features/auth/login.html';
 };
 
 export default dashboardController;

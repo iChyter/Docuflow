@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="../../shared/styles/desktop.css" media="(min-width: 1201px)">
   <link rel="stylesheet" href="../../shared/styles/tablet.css" media="(min-width: 769px) and (max-width: 1200px)">
   <link rel="stylesheet" href="../../shared/styles/phone.css" media="(max-width: 768px)">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <div class="app-container">
@@ -353,27 +356,232 @@
       }
 
       exportPDF() {
-        alert('Exportando a PDF...');
-        setTimeout(() => {
-          this.addToHistory('PDF - Todos los datos');
-          alert('Exportación completada');
-        }, 1500);
+        const dataType = document.getElementById('exportDataType').value;
+        this.generatePDF(dataType);
       }
 
       exportExcel() {
-        alert('Exportando a Excel...');
-        setTimeout(() => {
-          this.addToHistory('Excel - Todos los datos');
-          alert('Exportación completada');
-        }, 1500);
+        const dataType = document.getElementById('exportDataType').value;
+        this.generateExcel(dataType);
       }
 
       exportCSV() {
-        alert('Exportando a CSV...');
-        setTimeout(() => {
-          this.addToHistory('CSV - Todos los datos');
-          alert('Exportación completada');
-        }, 1500);
+        const dataType = document.getElementById('exportDataType').value;
+        this.generateCSV(dataType);
+      }
+
+      async getExportData(dataType) {
+        const { supabase } = await import('../../shared/services/supabaseClient.js');
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        const data = { files: [], users: [], logs: [] };
+        
+        if (dataType === 'all' || dataType === 'files') {
+          let query = supabase.from('documents').select('*').eq('is_deleted', false);
+          if (startDate) query = query.gte('created_at', startDate);
+          if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
+          const { data: files } = await query;
+          data.files = files || [];
+        }
+        
+        if (dataType === 'all' || dataType === 'users') {
+          const { data: users } = await supabase.from('profiles').select('*');
+          data.users = users || [];
+        }
+        
+        if (dataType === 'all' || dataType === 'logs') {
+          let query = supabase.from('logs').select('*').order('created_at', { ascending: false });
+          if (startDate) query = query.gte('created_at', startDate);
+          if (endDate) query = query.lte('created_at', endDate + 'T23:59:59');
+          const { data: logs } = await query;
+          data.logs = logs || [];
+        }
+        
+        return data;
+      }
+
+      generateCSV(dataType) {
+        this.getExportData(dataType).then(data => {
+          let csvContent = '';
+          
+          if (data.files.length > 0 && (dataType === 'all' || dataType === 'files')) {
+            csvContent += '=== ARCHIVOS ===\n';
+            csvContent += 'ID,Nombre,Tipo,Tamaño,Usuario,Fecha Creación\n';
+            data.files.forEach(f => {
+              csvContent += `${f.id},"${f.name || f.file_name}",${f.mime_type || '-'},${f.size || 0},${f.created_by || '-'},${f.created_at || '-'}\n`;
+            });
+            csvContent += '\n';
+          }
+          
+          if (data.users.length > 0 && (dataType === 'all' || dataType === 'users')) {
+            csvContent += '=== USUARIOS ===\n';
+            csvContent += 'ID,Username,Nombre Completo,Email,Rol,Fecha Registro\n';
+            data.users.forEach(u => {
+              csvContent += `${u.id},"${u.username || ''}","${u.full_name || ''}","${u.email || ''}","${u.role || 'usuario'}",${u.created_at || '-'}\n`;
+            });
+            csvContent += '\n';
+          }
+          
+          if (data.logs.length > 0 && (dataType === 'all' || dataType === 'logs')) {
+            csvContent += '=== LOGS ===\n';
+            csvContent += 'ID,Acción,Usuario,Detalles,Fecha\n';
+            data.logs.forEach(l => {
+              csvContent += `${l.id},"${l.action || ''}","${l.user_id || '-'}","${l.details || ''}",${l.created_at || '-'}\n`;
+            });
+          }
+          
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `docuflow_export_${new Date().toISOString().split('T')[0]}.csv`;
+          link.click();
+          
+          this.addToHistory(`CSV - ${dataType}`);
+        });
+      }
+
+      generateExcel(dataType) {
+        this.getExportData(dataType).then(data => {
+          const wb = XLSX.utils.book_new();
+          
+          if (data.files.length > 0 && (dataType === 'all' || dataType === 'files')) {
+            const filesData = data.files.map(f => ({
+              'ID': f.id,
+              'Nombre': f.name || f.file_name || '-',
+              'Tipo': f.mime_type || '-',
+              'Tamaño (bytes)': f.size || 0,
+              'Usuario': f.created_by || '-',
+              'Fecha Creación': f.created_at ? new Date(f.created_at).toLocaleString('es-ES') : '-'
+            }));
+            const wsFiles = XLSX.utils.json_to_sheet(filesData);
+            XLSX.utils.book_append_sheet(wb, wsFiles, 'Archivos');
+          }
+          
+          if (data.users.length > 0 && (dataType === 'all' || dataType === 'users')) {
+            const usersData = data.users.map(u => ({
+              'ID': u.id,
+              'Username': u.username || '-',
+              'Nombre Completo': u.full_name || '-',
+              'Email': u.email || '-',
+              'Rol': u.role || 'usuario',
+              'Fecha Registro': u.created_at ? new Date(u.created_at).toLocaleString('es-ES') : '-'
+            }));
+            const wsUsers = XLSX.utils.json_to_sheet(usersData);
+            XLSX.utils.book_append_sheet(wb, wsUsers, 'Usuarios');
+          }
+          
+          if (data.logs.length > 0 && (dataType === 'all' || dataType === 'logs')) {
+            const logsData = data.logs.map(l => ({
+              'ID': l.id,
+              'Acción': l.action || '-',
+              'Usuario': l.user_id || '-',
+              'Detalles': l.details || '-',
+              'Fecha': l.created_at ? new Date(l.created_at).toLocaleString('es-ES') : '-'
+            }));
+            const wsLogs = XLSX.utils.json_to_sheet(logsData);
+            XLSX.utils.book_append_sheet(wb, wsLogs, 'Logs');
+          }
+          
+          XLSX.writeFile(wb, `docuflow_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+          
+          this.addToHistory(`Excel - ${dataType}`);
+        });
+      }
+
+      generatePDF(dataType) {
+        this.getExportData(dataType).then(data => {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          
+          doc.setFontSize(20);
+          doc.text('DocuFlow - Reporte de Exportación', 14, 22);
+          doc.setFontSize(10);
+          doc.text(`Generado: ${new Date().toLocaleString('es-ES')}`, 14, 30);
+          
+          let yPos = 40;
+          
+          if (data.files.length > 0 && (dataType === 'all' || dataType === 'files')) {
+            doc.setFontSize(14);
+            doc.text('Archivos', 14, yPos);
+            yPos += 6;
+            
+            const filesRows = data.files.slice(0, 50).map(f => [
+              (f.name || f.file_name || '-').substring(0, 30),
+              f.mime_type ? f.mime_type.split('/')[1] : '-',
+              f.size ? (f.size / 1024).toFixed(1) + ' KB' : '-',
+              f.created_at ? new Date(f.created_at).toLocaleDateString('es-ES') : '-'
+            ]);
+            
+            doc.autoTable({
+              startY: yPos,
+              head: [['Nombre', 'Tipo', 'Tamaño', 'Fecha']],
+              body: filesRows,
+              styles: { fontSize: 8 },
+              headStyles: { fillColor: [99, 102, 241] }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 10;
+          }
+          
+          if (data.users.length > 0 && (dataType === 'all' || dataType === 'users')) {
+            if (yPos > 250) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.text('Usuarios', 14, yPos);
+            yPos += 6;
+            
+            const usersRows = data.users.map(u => [
+              u.username || '-',
+              u.full_name || '-',
+              u.email || '-',
+              u.role || 'usuario'
+            ]);
+            
+            doc.autoTable({
+              startY: yPos,
+              head: [['Username', 'Nombre', 'Email', 'Rol']],
+              body: usersRows,
+              styles: { fontSize: 8 },
+              headStyles: { fillColor: [99, 102, 241] }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 10;
+          }
+          
+          if (data.logs.length > 0 && (dataType === 'all' || dataType === 'logs')) {
+            if (yPos > 200) {
+              doc.addPage();
+              yPos = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.text('Logs de Actividad', 14, yPos);
+            yPos += 6;
+            
+            const logsRows = data.logs.slice(0, 30).map(l => [
+              l.action || '-',
+              l.user_id ? l.user_id.substring(0, 15) : '-',
+              (l.details || '-').substring(0, 40),
+              l.created_at ? new Date(l.created_at).toLocaleString('es-ES').substring(0, 10) : '-'
+            ]);
+            
+            doc.autoTable({
+              startY: yPos,
+              head: [['Acción', 'Usuario', 'Detalles', 'Fecha']],
+              body: logsRows,
+              styles: { fontSize: 8 },
+              headStyles: { fillColor: [99, 102, 241] }
+            });
+          }
+          
+          doc.save(`docuflow_export_${new Date().toISOString().split('T')[0]}.pdf`);
+          
+          this.addToHistory(`PDF - ${dataType}`);
+        });
       }
     }
 

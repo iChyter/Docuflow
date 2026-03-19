@@ -71,42 +71,42 @@
         <div id="users-list" style="display: flex; flex-direction: column; gap: 16px;">
           <!-- Users will be loaded here -->
         </div>
+        
+        <!-- User Edit Panel -->
+        <div id="user-edit-panel" style="display: none; margin-top: 24px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0;">Editar Usuario</h3>
+            <button onclick="window.closeEditPanel()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+            <div style="width: 56px; height: 56px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <i class="bi bi-person" style="color: var(--primary-color); font-size: 24px;"></i>
+            </div>
+            <div>
+              <div id="edit-preview-username" style="font-weight: 600; font-size: 18px;">-</div>
+              <div id="edit-preview-email" style="color: var(--text-muted); font-size: 14px;">-</div>
+              <div id="edit-preview-role" style="font-size: 12px; color: var(--text-muted);">-</div>
+            </div>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <label style="font-weight: 600; font-size: 14px;">Cambiar Rol</label>
+            <select id="newRole" style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface);">
+              <option value="admin">Administrador</option>
+              <option value="colaborador">Colaborador</option>
+              <option value="usuario">Usuario</option>
+            </select>
+            <button class="btn-primary" id="btn-save-role" onclick="window.saveRole()">
+              <i class="bi bi-check-lg"></i> Guardar Cambios
+            </button>
+          </div>
+        </div>
       </div>
     </main>
 
     <!-- Right Sidebar -->
-    <aside class="right-sidebar" id="right-sidebar-container">
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Usuario Seleccionado</span>
-        </div>
-        
-        <div class="file-preview" id="user-preview">
-          <div class="file-preview-icon" style="background: var(--surface-hover);">
-            <i class="bi bi-person" style="color: var(--primary-color); font-size: 32px;"></i>
-          </div>
-          <div class="file-preview-title" id="preview-username">Selecciona un usuario</div>
-          <div class="file-preview-meta" id="preview-email">-</div>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Cambiar Rol</span>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <select id="newRole" disabled style="padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; background: var(--surface-hover);">
-            <option value="admin">Administrador</option>
-            <option value="colaborador">Colaborador</option>
-            <option value="usuario">Usuario</option>
-          </select>
-          <button class="btn-primary" id="btn-save-role" disabled onclick="window.saveRole()">
-            <i class="bi bi-check-lg"></i> Guardar Cambios
-          </button>
-        </div>
-      </div>
-    </aside>
+    <aside class="right-sidebar" id="right-sidebar-container"></aside>
   </div>
 
   <!-- Create User Modal -->
@@ -348,25 +348,28 @@
         this.selectedUser = user;
         const displayName = user.username || user.full_name || 'Usuario';
         
-        const previewUsername = document.getElementById('preview-username');
-        const previewEmail = document.getElementById('preview-email');
-        const newRoleSelect = document.getElementById('newRole');
-        const saveBtn = document.getElementById('btn-save-role');
-        if (previewUsername) previewUsername.textContent = displayName;
-        if (previewEmail) previewEmail.textContent = user.full_name || '-';
-        if (newRoleSelect) newRoleSelect.value = user.role || 'colaborador';
+        // Show edit panel and update values
+        const editPanel = document.getElementById('user-edit-panel');
+        if (editPanel) editPanel.style.display = 'block';
+        
+        document.getElementById('edit-preview-username').textContent = displayName;
+        document.getElementById('edit-preview-email').textContent = user.full_name || '-';
+        document.getElementById('edit-preview-role').textContent = 'Rol actual: ' + (user.role || 'usuario');
+        document.getElementById('newRole').value = user.role || 'colaborador';
+        
+        // Enable/disable controls based on admin status
+        document.getElementById('newRole').disabled = !this.isAdmin;
+        document.getElementById('btn-save-role').disabled = !this.isAdmin;
+        
+        if (!this.isAdmin) {
+          document.getElementById('btn-save-role').style.opacity = '0.5';
+          document.getElementById('btn-save-role').title = 'Solo administradores pueden cambiar roles';
+        } else {
+          document.getElementById('btn-save-role').style.opacity = '1';
+          document.getElementById('btn-save-role').title = '';
+        }
         
         console.log('selectUser - isAdmin:', this.isAdmin);
-        
-        // Enable editing only if admin
-        if (newRoleSelect) {
-          newRoleSelect.disabled = !this.isAdmin;
-          newRoleSelect.title = this.isAdmin ? '' : 'Solo administradores pueden cambiar roles';
-        }
-        if (saveBtn) {
-          saveBtn.disabled = !this.isAdmin;
-          saveBtn.title = this.isAdmin ? '' : 'Solo administradores pueden cambiar roles';
-        }
       }
 
       updateStats() {
@@ -434,6 +437,11 @@
     });
     
     window.saveRole = () => window.permissionsController.saveRole();
+    
+    window.closeEditPanel = () => {
+      const panel = document.getElementById('user-edit-panel');
+      if (panel) panel.style.display = 'none';
+    };
     
     window.openCreateUserModal = () => {
       document.getElementById('createUserModal').style.display = 'flex';

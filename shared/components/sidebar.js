@@ -285,7 +285,7 @@ class SidebarComponent {
     }
 
     const userInfoDiv = document.getElementById('sidebar-user-info');
-    if (userInfoDiv && showSettings) {
+    if (userInfoDiv) {
       userInfoDiv.onclick = () => {
         this.openProfileModal();
       };

@@ -217,49 +217,69 @@ class SidebarComponent {
               </div>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <a href="./features/profile/profile.html" class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover); text-decoration: none; color: var(--text-primary); transition: background 0.2s;">
-                <i class="bi bi-person" style="font-size: 20px; color: var(--primary-color);"></i>
-                <div>
-                  <div style="font-weight: 600;">Editar Perfil</div>
-                  <div style="font-size: 12px; color: var(--text-muted);">Nombre, username, avatar</div>
-                </div>
-                <i class="bi bi-chevron-right" style="margin-left: auto;"></i>
-              </a>
-              
-              <a href="./features/profile/profile.html#security" class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover); text-decoration: none; color: var(--text-primary); transition: background 0.2s;">
-                <i class="bi bi-key" style="font-size: 20px; color: var(--warning);"></i>
-                <div>
-                  <div style="font-weight: 600;">Cambiar Contraseña</div>
-                  <div style="font-size: 12px; color: var(--text-muted);">Actualiza tu contraseña</div>
-                </div>
-                <i class="bi bi-chevron-right" style="margin-left: auto;"></i>
-              </a>
-              
-              <div class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover);">
-                <i class="bi bi-envelope" style="font-size: 20px; color: var(--info);"></i>
-                <div>
-                  <div style="font-weight: 600;">Correo</div>
-                  <div id="profile-modal-email" style="font-size: 12px; color: var(--text-muted);">email@example.com</div>
-                </div>
+            <!-- Edit Profile Section -->
+            <div id="profile-edit-section" style="margin-bottom: 20px;">
+              <div style="font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-person"></i> Editar Perfil
               </div>
-              
-              <div class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover);">
-                <i class="bi bi-shield-check" style="font-size: 20px; color: var(--success);"></i>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
                 <div>
-                  <div style="font-weight: 600;">Mi Rol</div>
-                  <div id="profile-modal-role-badge" style="font-size: 12px; color: var(--text-muted);">Administrador</div>
+                  <label style="font-size: 12px; color: var(--text-muted);">Nombre Completo</label>
+                  <input type="text" id="profile-input-fullname" placeholder="Tu nombre" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-hover); font-family: inherit;">
                 </div>
+                <div>
+                  <label style="font-size: 12px; color: var(--text-muted);">Username</label>
+                  <input type="text" id="profile-input-username" placeholder="Nombre de usuario" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-hover); font-family: inherit;">
+                </div>
+                <button onclick="window.sidebarComponent?.saveProfile()" style="padding: 10px 16px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                  <i class="bi bi-check-lg"></i> Guardar Perfil
+                </button>
+                <div id="profile-save-msg" style="font-size: 12px; text-align: center;"></div>
               </div>
-              
-              <button onclick="if(confirm('¿Cerrar sesión?')){window.sidebarComponent?.handleLogout();}" class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--danger-light); border: none; cursor: pointer; width: 100%; text-align: left; color: var(--danger);">
-                <i class="bi bi-box-arrow-right" style="font-size: 20px;"></i>
-                <div>
-                  <div style="font-weight: 600;">Cerrar Sesión</div>
-                  <div style="font-size: 12px; opacity: 0.8;">Salir de tu cuenta</div>
-                </div>
-              </button>
             </div>
+            
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+            
+            <!-- Change Password Section -->
+            <div id="profile-password-section" style="margin-bottom: 20px;">
+              <div style="font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-key"></i> Cambiar Contraseña
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                  <label style="font-size: 12px; color: var(--text-muted);">Nueva Contraseña</label>
+                  <input type="password" id="profile-input-newpassword" placeholder="Mínimo 8 caracteres" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-hover); font-family: inherit;">
+                </div>
+                <div>
+                  <label style="font-size: 12px; color: var(--text-muted);">Confirmar Contraseña</label>
+                  <input type="password" id="profile-input-confirmpassword" placeholder="Repite la contraseña" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-hover); font-family: inherit;">
+                </div>
+                <button onclick="window.sidebarComponent?.changePassword()" style="padding: 10px 16px; background: var(--warning); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                  <i class="bi bi-check-lg"></i> Actualizar Contraseña
+                </button>
+                <div id="password-save-msg" style="font-size: 12px; text-align: center;"></div>
+              </div>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+            
+            <!-- User Info -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                <i class="bi bi-envelope" style="color: var(--text-muted);"></i>
+                <span id="profile-modal-email">email@example.com</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                <i class="bi bi-shield-check" style="color: var(--text-muted);"></i>
+                <span>Rol: <strong id="profile-modal-role-badge">Administrador</strong></span>
+              </div>
+            </div>
+            
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+            
+            <button onclick="if(confirm('¿Cerrar sesión?')){window.sidebarComponent?.handleLogout();}" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border-radius: 10px; background: var(--danger-light); border: none; cursor: pointer; width: 100%; color: var(--danger); font-weight: 600;">
+              <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+            </button>
           </div>
         </div>
       `;
@@ -426,6 +446,144 @@ class SidebarComponent {
     }
     
     modal.style.display = 'flex';
+    
+    // Load profile data into inputs
+    this.loadProfileData();
+  }
+  
+  async loadProfileData() {
+    try {
+      const { supabase } = await import('../../shared/services/supabaseClient.js');
+      const { authService } = await import('../../shared/services/authServiceSupabase.js');
+      const user = await authService.getCurrentUser();
+      
+      if (!user) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, full_name')
+        .eq('id', user.id)
+        .single();
+      
+      const fullnameInput = document.getElementById('profile-input-fullname');
+      const usernameInput = document.getElementById('profile-input-username');
+      
+      if (fullnameInput && profile?.full_name) {
+        fullnameInput.value = profile.full_name;
+      }
+      if (usernameInput && profile?.username) {
+        usernameInput.value = profile.username;
+      }
+    } catch (e) {
+      console.warn('Could not load profile data:', e);
+    }
+  }
+
+  async saveProfile() {
+    const msgEl = document.getElementById('profile-save-msg');
+    const fullnameInput = document.getElementById('profile-input-fullname');
+    const usernameInput = document.getElementById('profile-input-username');
+    
+    const fullName = fullnameInput?.value?.trim();
+    const username = usernameInput?.value?.trim();
+    
+    if (!fullName && !username) {
+      msgEl.textContent = 'Completa al menos un campo';
+      msgEl.style.color = 'var(--danger)';
+      return;
+    }
+    
+    try {
+      const { supabase } = await import('../../shared/services/supabaseClient.js');
+      const { authService } = await import('../../shared/services/authServiceSupabase.js');
+      const user = await authService.getCurrentUser();
+      
+      if (!user) {
+        msgEl.textContent = 'No hay sesión activa';
+        msgEl.style.color = 'var(--danger)';
+        return;
+      }
+      
+      const updates = {};
+      if (fullName) updates.full_name = fullName;
+      if (username) updates.username = username;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Update sidebar display
+      const sidebarName = document.getElementById('sidebar-user-name');
+      if (sidebarName && fullName) sidebarName.textContent = fullName;
+      
+      const modalName = document.getElementById('profile-modal-name');
+      if (modalName && fullName) modalName.textContent = fullName;
+      
+      if (msgEl) {
+        msgEl.textContent = '¡Perfil actualizado!';
+        msgEl.style.color = 'var(--success)';
+        setTimeout(() => { msgEl.textContent = ''; }, 3000);
+      }
+    } catch (e) {
+      console.error('Error saving profile:', e);
+      if (msgEl) {
+        msgEl.textContent = 'Error: ' + (e.message || 'No se pudo guardar');
+        msgEl.style.color = 'var(--danger)';
+      }
+    }
+  }
+
+  async changePassword() {
+    const msgEl = document.getElementById('password-save-msg');
+    const newPass = document.getElementById('profile-input-newpassword')?.value;
+    const confirmPass = document.getElementById('profile-input-confirmpassword')?.value;
+    
+    if (!newPass || newPass.length < 8) {
+      msgEl.textContent = 'La contraseña debe tener al menos 8 caracteres';
+      msgEl.style.color = 'var(--danger)';
+      return;
+    }
+    
+    if (newPass !== confirmPass) {
+      msgEl.textContent = 'Las contraseñas no coinciden';
+      msgEl.style.color = 'var(--danger)';
+      return;
+    }
+    
+    try {
+      const { supabase } = await import('../../shared/services/supabaseClient.js');
+      const { authService } = await import('../../shared/services/authServiceSupabase.js');
+      const user = await authService.getCurrentUser();
+      
+      if (!user) {
+        msgEl.textContent = 'No hay sesión activa';
+        msgEl.style.color = 'var(--danger)';
+        return;
+      }
+      
+      const { error } = await supabase.auth.updateUser({ password: newPass });
+      
+      if (error) throw error;
+      
+      if (msgEl) {
+        msgEl.textContent = '¡Contraseña actualizada!';
+        msgEl.style.color = 'var(--success)';
+        setTimeout(() => { msgEl.textContent = ''; }, 3000);
+      }
+      
+      // Clear inputs
+      document.getElementById('profile-input-newpassword').value = '';
+      document.getElementById('profile-input-confirmpassword').value = '';
+    } catch (e) {
+      console.error('Error changing password:', e);
+      if (msgEl) {
+        msgEl.textContent = 'Error: ' + (e.message || 'No se pudo cambiar');
+        msgEl.style.color = 'var(--danger)';
+      }
+    }
   }
 
   async handleLogout() {

@@ -197,6 +197,80 @@ class SidebarComponent {
       </div>
     `;
 
+    // Inject profile modal if not exists
+    if (!document.getElementById('sidebar-profile-modal')) {
+      const modal = document.createElement('div');
+      modal.id = 'sidebar-profile-modal';
+      modal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;';
+      modal.innerHTML = `
+        <div style="background: var(--surface); border-radius: 16px; width: 100%; max-width: 420px; margin: 20px; max-height: 90vh; overflow-y: auto;">
+          <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Mi Perfil</h3>
+            <button onclick="document.getElementById('sidebar-profile-modal').style.display='none'" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+          </div>
+          <div style="padding: 20px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+              <img src="https://ui-avatars.com/api/?name=Usuario&background=6366f1&color=fff" alt="Avatar" id="profile-modal-avatar" style="width: 64px; height: 64px; border-radius: 50%;">
+              <div>
+                <div id="profile-modal-name" style="font-weight: 600; font-size: 18px;">Usuario</div>
+                <div id="profile-modal-role" style="font-size: 14px; color: var(--text-muted);">Rol</div>
+              </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <a href="./features/profile/profile.html" class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover); text-decoration: none; color: var(--text-primary); transition: background 0.2s;">
+                <i class="bi bi-person" style="font-size: 20px; color: var(--primary-color);"></i>
+                <div>
+                  <div style="font-weight: 600;">Editar Perfil</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">Nombre, username, avatar</div>
+                </div>
+                <i class="bi bi-chevron-right" style="margin-left: auto;"></i>
+              </a>
+              
+              <a href="./features/profile/profile.html#security" class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover); text-decoration: none; color: var(--text-primary); transition: background 0.2s;">
+                <i class="bi bi-key" style="font-size: 20px; color: var(--warning);"></i>
+                <div>
+                  <div style="font-weight: 600;">Cambiar Contraseña</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">Actualiza tu contraseña</div>
+                </div>
+                <i class="bi bi-chevron-right" style="margin-left: auto;"></i>
+              </a>
+              
+              <div class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover);">
+                <i class="bi bi-envelope" style="font-size: 20px; color: var(--info);"></i>
+                <div>
+                  <div style="font-weight: 600;">Correo</div>
+                  <div id="profile-modal-email" style="font-size: 12px; color: var(--text-muted);">email@example.com</div>
+                </div>
+              </div>
+              
+              <div class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--surface-hover);">
+                <i class="bi bi-shield-check" style="font-size: 20px; color: var(--success);"></i>
+                <div>
+                  <div style="font-weight: 600;">Mi Rol</div>
+                  <div id="profile-modal-role-badge" style="font-size: 12px; color: var(--text-muted);">Administrador</div>
+                </div>
+              </div>
+              
+              <button onclick="if(confirm('¿Cerrar sesión?')){window.sidebarComponent?.handleLogout();}" class="profile-action-btn" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; background: var(--danger-light); border: none; cursor: pointer; width: 100%; text-align: left; color: var(--danger);">
+                <i class="bi bi-box-arrow-right" style="font-size: 20px;"></i>
+                <div>
+                  <div style="font-weight: 600;">Cerrar Sesión</div>
+                  <div style="font-size: 12px; opacity: 0.8;">Salir de tu cuenta</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Close modal on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+    }
+
     const searchInput = document.getElementById('sidebar-search');
     if (searchInput) {
       searchInput.addEventListener('keypress', (e) => {
@@ -213,7 +287,7 @@ class SidebarComponent {
     const userInfoDiv = document.getElementById('sidebar-user-info');
     if (userInfoDiv && showSettings) {
       userInfoDiv.onclick = () => {
-        window.location.href = this.getPath('settings');
+        this.openProfileModal();
       };
     }
 
@@ -312,6 +386,46 @@ class SidebarComponent {
       };
       roleEl.textContent = roleLabels[role] || 'Usuario';
     }
+  }
+
+  openProfileModal() {
+    const modal = document.getElementById('sidebar-profile-modal');
+    if (!modal) return;
+    
+    // Update modal with current user info
+    const userName = document.getElementById('sidebar-user-name')?.textContent || 'Usuario';
+    const userRole = document.getElementById('sidebar-user-role')?.textContent || 'Usuario';
+    
+    const modalName = document.getElementById('profile-modal-name');
+    const modalRole = document.getElementById('profile-modal-role');
+    const modalRoleBadge = document.getElementById('profile-modal-role-badge');
+    const modalEmail = document.getElementById('profile-modal-email');
+    const modalAvatar = document.getElementById('profile-modal-avatar');
+    
+    if (modalName) modalName.textContent = userName;
+    if (modalRole) modalRole.textContent = userRole;
+    if (modalRoleBadge) modalRoleBadge.textContent = userRole;
+    if (modalAvatar) {
+      modalAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff`;
+    }
+    
+    // Try to get email from localStorage or auth service
+    try {
+      const storedUser = localStorage.getItem('docuflow_user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        if (modalEmail && user.email) {
+          modalEmail.textContent = user.email;
+        }
+        if (modalAvatar && user.avatar_url) {
+          modalAvatar.src = user.avatar_url;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load user email:', e);
+    }
+    
+    modal.style.display = 'flex';
   }
 
   async handleLogout() {

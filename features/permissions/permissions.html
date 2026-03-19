@@ -347,25 +347,25 @@
         
         this.selectedUser = user;
         const displayName = user.username || user.full_name || 'Usuario';
-        document.getElementById('preview-username').textContent = displayName;
-        document.getElementById('preview-email').textContent = user.full_name || '-';
-        document.getElementById('newRole').value = user.role || 'colaborador';
+        
+        const previewUsername = document.getElementById('preview-username');
+        const previewEmail = document.getElementById('preview-email');
+        const newRoleSelect = document.getElementById('newRole');
+        const saveBtn = document.getElementById('btn-save-role');
+        if (previewUsername) previewUsername.textContent = displayName;
+        if (previewEmail) previewEmail.textContent = user.full_name || '-';
+        if (newRoleSelect) newRoleSelect.value = user.role || 'colaborador';
         
         console.log('selectUser - isAdmin:', this.isAdmin);
         
         // Enable editing only if admin
-        const roleSelect = document.getElementById('newRole');
-        const saveBtn = document.getElementById('btn-save-role');
-        
-        roleSelect.disabled = !this.isAdmin;
-        saveBtn.disabled = !this.isAdmin;
-        
-        if (!this.isAdmin) {
-          roleSelect.title = 'Solo administradores pueden cambiar roles';
-          saveBtn.title = 'Solo administradores pueden cambiar roles';
-        } else {
-          roleSelect.title = '';
-          saveBtn.title = '';
+        if (newRoleSelect) {
+          newRoleSelect.disabled = !this.isAdmin;
+          newRoleSelect.title = this.isAdmin ? '' : 'Solo administradores pueden cambiar roles';
+        }
+        if (saveBtn) {
+          saveBtn.disabled = !this.isAdmin;
+          saveBtn.title = this.isAdmin ? '' : 'Solo administradores pueden cambiar roles';
         }
       }
 

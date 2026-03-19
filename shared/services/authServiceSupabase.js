@@ -75,11 +75,12 @@ export const authService = {
 
   async getCurrentUser() {
     try {
+      await this.checkSession();
+      
       const { data: { user }, error } = await supabase.auth.getUser()
       
       if (error) {
         console.warn('Error getting user:', error.message)
-        // Falls back to stored user
         const stored = localStorage.getItem('docuflow_user')
         return stored ? JSON.parse(stored) : null
       }

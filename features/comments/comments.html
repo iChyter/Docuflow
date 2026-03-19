@@ -68,7 +68,8 @@
             <i class="bi bi-chat-square-text" style="color: var(--primary-color); font-size: 32px;"></i>
           </div>
           <div class="file-preview-title" id="preview-author">Selecciona un comentario</div>
-          <div class="file-preview-meta" id="preview-date">-</div>
+          <div class="file-preview-meta" id="preview-date">Haz clic en un comentario para verlo</div>
+          <div class="file-preview-meta" id="preview-assignees" style="margin-top: 8px; color: var(--primary-color);"></div>
         </div>
       </div>
 
@@ -78,10 +79,10 @@
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <button class="btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer;" id="btn-assign-comment" disabled onclick="window.openAssignModal()">
+          <button class="btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; opacity: 0.4;" id="btn-assign-comment" disabled onclick="window.openAssignModal()">
             <i class="bi bi-person-check"></i> Asignar Comentario
           </button>
-          <button class="btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; color: var(--danger);" id="btn-delete-comment" disabled onclick="window.deleteSelected()">
+          <button class="btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); cursor: pointer; color: var(--danger); opacity: 0.4;" id="btn-delete-comment" disabled onclick="window.deleteSelected()">
             <i class="bi bi-trash"></i> Eliminar Comentario
           </button>
         </div>
@@ -194,9 +195,11 @@
         this.loading = true;
         console.log('=== Comments Controller Init ===');
         
+        await authService.checkSession();
         await this.loadCurrentUser();
         await this.loadComments();
         this.setupEventListeners();
+        this.disableButtons(); // Disable buttons until a comment is selected
         
         // Update sidebar stats
         if (window.sidebarComponent) {
@@ -208,15 +211,20 @@
 
       async loadCurrentUser() {
         try {
-          const profile = await profileService.getCurrentProfile();
-          if (profile) {
-            this.currentUserId = profile.id;
-            this.currentUserRole = profile.role || 'user';
-            console.log('Current user:', this.currentUserId, this.currentUserRole);
+          const user = await authService.getCurrentUser();
+          if (user) {
+            this.currentUserId = user.id;
+            this.currentUserRole = 'user';
+            console.log('Current user from authService:', this.currentUserId);
+          } else {
+            const profile = await profileService.getCurrentProfile().catch(() => null);
+            if (profile) {
+              this.currentUserId = profile.id;
+              this.currentUserRole = profile.role || 'user';
+            }
           }
         } catch (error) {
-          console.error('Error loading current user:', error);
-          // Fallback: try authService
+          console.warn('Error loading current user:', error);
           try {
             const user = await authService.getCurrentUser();
             if (user) {
@@ -224,7 +232,7 @@
               this.currentUserRole = 'user';
             }
           } catch (e) {
-            console.error('Fallback also failed:', e);
+            console.error('Auth fallback also failed:', e);
           }
         }
       }
@@ -238,6 +246,20 @@
 
       async loadComments() {
         try {
+          await authService.checkSession();
+          const user = await authService.getCurrentUser();
+          if (!user) {
+            console.log('No authenticated user, showing empty state');
+            this.comments = [];
+            this.filteredComments = [];
+            this.renderComments();
+            this.updateStats();
+            return;
+          }
+          
+          const token = authService.getToken();
+          console.log('Token available:', !!token);
+          
           const result = await commentService.list(100);
           this.comments = Array.isArray(result) ? result : [];
           this.filteredComments = [...this.comments];
@@ -259,40 +281,127 @@
         }
       }
 
-      renderComments() {
+      async renderComments() {
         const container = document.getElementById('comments-list');
         if (!container) return;
 
+        const user = await authService.getCurrentUser();
+        
         if (this.filteredComments.length === 0) {
-          container.innerHTML = `
-            <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
-              <i class="bi bi-chat-square-text" style="font-size: 64px; margin-bottom: 16px; display: block;"></i>
-              <p style="font-size: 16px; margin-bottom: 8px;">No hay comentarios</p>
-              <button class="btn-primary" onclick="window.openCommentModal()">
-                <i class="bi bi-plus-lg"></i> Agregar comentario
-              </button>
-            </div>`;
+          if (!user) {
+            container.innerHTML = `
+              <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                <i class="bi bi-chat-square-text" style="font-size: 64px; margin-bottom: 16px; display: block;"></i>
+                <p style="font-size: 16px; margin-bottom: 8px;">Inicia sesión para ver comentarios</p>
+                <a href="../auth/login.html" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 10px; text-decoration: none;">
+                  <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                </a>
+              </div>`;
+          } else {
+            container.innerHTML = `
+              <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                <i class="bi bi-chat-square-text" style="font-size: 64px; margin-bottom: 16px; display: block;"></i>
+                <p style="font-size: 16px; margin-bottom: 8px;">No hay comentarios</p>
+                <button class="btn-primary" onclick="window.openCommentModal()">
+                  <i class="bi bi-plus-lg"></i> Agregar comentario
+                </button>
+              </div>`;
+          }
           return;
         }
 
+        // Load all assignee profiles at once
+        const allAssigneeIds = this.filteredComments
+          .filter(c => c.assignees && c.assignees.length > 0)
+          .flatMap(c => c.assignees);
+        
+        const uniqueAssigneeIds = [...new Set(allAssigneeIds)];
+        let assigneeProfiles = {};
+        
+        if (uniqueAssigneeIds.length > 0) {
+          try {
+            const { supabase } = await import('../../shared/services/supabaseClient.js');
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, username, full_name')
+              .in('id', uniqueAssigneeIds);
+            
+            if (profiles) {
+              profiles.forEach(p => {
+                assigneeProfiles[p.id] = p.full_name || p.username;
+              });
+            }
+          } catch (error) {
+            console.error('Error loading assignee profiles:', error);
+          }
+        }
+
         container.innerHTML = this.filteredComments.map(comment => {
+          const authorName = comment.author_username || comment.author || 'Usuario';
+          const assigneesHtml = comment.assignees && comment.assignees.length > 0
+            ? `<div style="font-size: 12px; color: var(--primary-color); margin-top: 4px;">
+                <i class="bi bi-person-check"></i> Asignado a: ${comment.assignees.map(id => assigneeProfiles[id] || 'Usuario').join(', ')}
+               </div>`
+            : '';
+          
           return `
-            <div class="card comment-card" onclick="window.commentsController.selectComment('${comment.id}')" data-comment-id="${comment.id}" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
+            <div class="card comment-card" data-comment-id="${comment.id}" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
               <div style="display: flex; gap: 16px;">
                 <div style="width: 40px; height: 40px; background: var(--primary-color)20; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                   <i class="bi bi-chat-dots" style="color: var(--primary-color); font-size: 20px;"></i>
                 </div>
                 <div style="flex: 1;">
                   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                    <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${comment.author_username || comment.author || 'Usuario'}</div>
+                    <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${authorName}</div>
                     <div style="font-size: 12px; color: var(--text-muted);">${this.formatDate(comment.created_at)}</div>
                   </div>
                   <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">${comment.content}</div>
+                  ${assigneesHtml}
                 </div>
               </div>
             </div>
           `;
         }).join('');
+        
+        // Use event delegation for comment selection
+        container.onclick = (e) => {
+          const card = e.target.closest('.comment-card');
+          if (card) {
+            const commentId = card.dataset.commentId;
+            this.selectComment(commentId);
+          }
+        };
+      }
+
+      disableButtons() {
+        const deleteBtn = document.getElementById('btn-delete-comment');
+        if (deleteBtn) {
+          deleteBtn.disabled = true;
+          deleteBtn.style.opacity = '0.4';
+          deleteBtn.title = 'Selecciona un comentario primero';
+        }
+        const assignBtn = document.getElementById('btn-assign-comment');
+        if (assignBtn) {
+          assignBtn.disabled = true;
+          assignBtn.style.opacity = '0.4';
+          assignBtn.title = 'Selecciona un comentario primero';
+        }
+      }
+
+      enableButtonsForComment(comment) {
+        const canDelete = this.canDelete(comment);
+        const deleteBtn = document.getElementById('btn-delete-comment');
+        if (deleteBtn) {
+          deleteBtn.disabled = false;
+          deleteBtn.style.opacity = canDelete ? '1' : '0.6';
+          deleteBtn.title = canDelete ? 'Eliminar comentario' : 'Solo el autor o un admin pueden eliminar';
+        }
+        const assignBtn = document.getElementById('btn-assign-comment');
+        if (assignBtn) {
+          assignBtn.disabled = false;
+          assignBtn.style.opacity = '1';
+          assignBtn.title = 'Asignar comentario';
+        }
       }
 
       selectComment(commentId) {
@@ -309,19 +418,50 @@
           card.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
         }
         
-        const comment = this.comments.find(c => c.id === commentId);
+        // Find the comment - handle both string and number id comparison
+        const comment = this.comments.find(c => String(c.id) === String(commentId));
+        console.log('[selectComment] Looking for:', commentId, 'found:', !!comment);
         if (!comment) return;
         
+        // Update selected comment
         this.selectedComment = comment;
+        
         document.getElementById('preview-author').textContent = comment.author_username || comment.author || 'Usuario';
         document.getElementById('preview-date').textContent = this.formatDate(comment.created_at);
         
-        // Check if user can delete (owner or admin)
-        const canDelete = this.canDelete(comment);
-        const deleteBtn = document.getElementById('btn-delete-comment');
-        deleteBtn.disabled = !canDelete;
-        deleteBtn.style.opacity = canDelete ? '1' : '0.5';
-        deleteBtn.title = canDelete ? 'Eliminar comentario' : 'Solo el autor o un admin pueden eliminar';
+        // Load and display assignees
+        this.loadAssigneesDisplay(comment);
+        
+        // Enable buttons
+        this.enableButtonsForComment(comment);
+      }
+
+      async loadAssigneesDisplay(comment) {
+        const assigneesDiv = document.getElementById('preview-assignees');
+        if (!assigneesDiv) return;
+        
+        if (!comment.assignees || comment.assignees.length === 0) {
+          assigneesDiv.innerHTML = '';
+          return;
+        }
+        
+        try {
+          const { supabase } = await import('../../shared/services/supabaseClient.js');
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, username, full_name')
+            .in('id', comment.assignees);
+          
+          if (profiles && profiles.length > 0) {
+            const names = profiles.map(p => p.full_name || p.username).join(', ');
+            assigneesDiv.innerHTML = `<i class="bi bi-person-check"></i> Asignado a: ${names}`;
+          } else {
+            assigneesDiv.innerHTML = '';
+          }
+        } catch (error) {
+          console.error('Error loading assignees:', error);
+          assigneesDiv.innerHTML = '';
+        }
       }
 
       setFilter(filter) {
@@ -381,7 +521,7 @@
         }
 
         try {
-          await commentService.create(content, null);
+          await commentService.create(content, null, false, []);
           
           this.closeCommentModal();
           await this.loadComments();
@@ -391,24 +531,30 @@
         }
       }
 
-      async deleteSelected() {
-        if (!this.selectedComment) return;
-        if (!this.canDelete(this.selectedComment)) {
+      deleteSelected() {
+        const comment = window.commentsController?.selectedComment;
+        if (!comment) {
+          alert('Selecciona un comentario primero');
+          return;
+        }
+        if (!window.commentsController.canDelete(comment)) {
           alert('No tienes permiso para eliminar este comentario');
           return;
         }
-        this.openDeleteModal();
+        window.commentsController.openDeleteModal();
       }
 
-      async confirmDelete() {
-        try {
-          await commentService.delete(this.selectedComment.id);
-          this.closeDeleteModal();
-          await this.loadComments();
-        } catch (error) {
+      confirmDelete() {
+        const comment = window.commentsController?.selectedComment;
+        if (!comment) return;
+        commentService.delete(comment.id).then(() => {
+          window.commentsController.selectedComment = null;
+          window.commentsController.closeDeleteModal();
+          window.commentsController.loadComments();
+        }).catch(error => {
           console.error('Error deleting comment:', error);
           alert('Error al eliminar: ' + error.message);
-        }
+        });
       }
 
       openDeleteModal() {
@@ -433,6 +579,89 @@
       closeCommentModal() {
         document.getElementById('commentModal').style.display = 'none';
       }
+
+      openAssignModal() {
+        const comment = window.commentsController?.selectedComment;
+        if (!comment) {
+          alert('Selecciona un comentario primero');
+          return;
+        }
+        
+        this.loadUsers().then(users => {
+          const select = document.getElementById('assignSelect');
+          select.innerHTML = '<option value="">Seleccionar usuario...</option>';
+          
+          users.forEach(user => {
+            const isAlreadyAssigned = comment.assignees?.includes(user.id);
+            const displayName = user.full_name || user.username || 'Usuario sin nombre';
+            select.innerHTML += `<option value="${user.id}" ${isAlreadyAssigned ? 'disabled' : ''}>${displayName}</option>`;
+          });
+          
+          document.getElementById('assignModal').style.display = 'flex';
+        }).catch(error => {
+          console.error('Error loading users:', error);
+          alert('Error al cargar usuarios');
+        });
+      }
+
+      closeAssignModal() {
+        document.getElementById('assignModal').style.display = 'none';
+      }
+
+      saveAssignment() {
+        const comment = window.commentsController?.selectedComment;
+        if (!comment) {
+          alert('Selecciona un comentario primero');
+          return;
+        }
+        
+        const select = document.getElementById('assignSelect');
+        const userId = select.value;
+        
+        if (!userId) {
+          alert('Por favor selecciona un usuario');
+          return;
+        }
+
+        const currentAssignees = comment.assignees || [];
+        const newAssignees = [...currentAssignees, userId];
+        
+        commentService.assign(comment.id, newAssignees).then(() => {
+          window.commentsController.closeAssignModal();
+          window.commentsController.loadComments().then(() => {
+            // Re-select the comment to refresh assignees display
+            window.commentsController.selectComment(comment.id);
+          });
+          alert('Usuario asignado correctamente');
+        }).catch(error => {
+          console.error('Error assigning comment:', error);
+          alert('Error al asignar: ' + error.message);
+        });
+      }
+
+      async loadUsers() {
+        try {
+          console.log('[loadUsers] Loading users...');
+          const { supabase } = await import('../../shared/services/supabaseClient.js');
+          console.log('[loadUsers] supabase client loaded');
+          
+          const { data: users, error } = await supabase
+            .from('profiles')
+            .select('id, username, full_name')
+            .order('username');
+          
+          console.log('[loadUsers] Result:', users, error);
+          
+          if (error) {
+            console.error('[loadUsers] Error:', error);
+          }
+          
+          return users || [];
+        } catch (error) {
+          console.error('[loadUsers] Catch error:', error);
+          return [];
+        }
+      }
     }
 
     // Initialize controller
@@ -447,6 +676,9 @@
     window.deleteSelected = () => window.commentsController.deleteSelected();
     window.confirmDelete = () => window.commentsController.confirmDelete();
     window.closeDeleteModal = () => window.commentsController.closeDeleteModal();
+    window.openAssignModal = () => window.commentsController.openAssignModal();
+    window.closeAssignModal = () => window.commentsController.closeAssignModal();
+    window.saveAssignment = () => window.commentsController.saveAssignment();
   </script>
 </body>
 </html>

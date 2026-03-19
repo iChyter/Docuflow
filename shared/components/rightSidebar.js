@@ -247,20 +247,19 @@ class RightSidebarComponent {
 
     const html = buttonsHtml + extras;
 
-    // Try to find existing right sidebar or create new one
+    // Only replace content if there's actual HTML to insert
     let sidebar = document.getElementById('right-sidebar-container');
 
     console.log('[RightSidebar] Insertando HTML en:', sidebar ? 'right-sidebar-container' : 'buscando .right-sidebar');
 
-    if (sidebar) {
-      // Limpiar contenido anterior y agregar nuevo
+    if (sidebar && html.trim()) {
       sidebar.innerHTML = html;
+    } else if (sidebar && !html.trim()) {
+      console.log('[RightSidebar] No hay acciones para esta página, conservando contenido original');
     } else {
       const existingSidebar = document.querySelector('.right-sidebar');
-      if (existingSidebar) {
+      if (existingSidebar && html.trim()) {
         existingSidebar.innerHTML = html;
-      } else {
-        console.warn('[RightSidebar] No se encontró contenedor para la barra derecha');
       }
     }
 

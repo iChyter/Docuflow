@@ -82,23 +82,28 @@ class SimpleCommentsController {
     }
 
     const user = authService.getCurrentUser();
+    const isTask = type === 'task';
+    
     const commentData = {
-      fileId: this.currentFileId,
+      documentId: parseInt(this.currentFileId),
       content,
-      type,
-      author: user?.email || user?.username || 'Anónimo',
-      createdAt: new Date().toISOString()
+      isTask,
+      assignees: []
     };
 
     // Si es una tarea, agregar campos adicionales
-    if (type === 'task') {
-      commentData.completed = false;
+    if (isTask) {
       commentData.priority = document.getElementById('taskPriority')?.value || 'medium';
       commentData.dueDate = document.getElementById('taskDueDate')?.value || null;
     }
 
     try {
-      const response = await commentService.create(commentData);
+      const response = await commentService.create(
+        commentData.content,
+        commentData.documentId,
+        commentData.isTask,
+        commentData.assignees
+      );
       
       if (response.success) {
         showNotification(`${type === 'task' ? 'Tarea' : 'Comentario'} agregado correctamente`, 'success');
@@ -119,7 +124,7 @@ class SimpleCommentsController {
 
   async loadComments() {
     try {
-      const comments = await commentService.byDocument(parseInt(this.currentFileId));
+      const comments = await commentService.byDocument(this.currentFileId);
       
       if (comments) {
         this.comments = comments || [];
@@ -137,7 +142,8 @@ class SimpleCommentsController {
     if (type === 'all') {
       this.renderCommentsList();
     } else {
-      const filtered = this.comments.filter(comment => comment.type === type);
+      const isTaskFilter = type === 'task';
+      const filtered = this.comments.filter(comment => comment.is_task === isTaskFilter);
       this.renderCommentsList(filtered);
     }
   }
@@ -148,7 +154,7 @@ class SimpleCommentsController {
     } else {
       const completed = status === 'completed';
       const filtered = this.comments.filter(comment => 
-        comment.type === 'task' && comment.completed === completed
+        comment.is_task && comment.completed === completed
       );
       this.renderCommentsList(filtered);
     }
@@ -168,17 +174,21 @@ class SimpleCommentsController {
       return;
     }
 
-    container.innerHTML = commentsToRender.map(comment => `
-      <div class="comment-item card mb-3 ${comment.type === 'task' ? 'task-item' : ''}">
+    container.innerHTML = commentsToRender.map(comment => {
+      const isTask = comment.is_task;
+      const authorName = comment.author_username || comment.profiles?.username || 'Usuario';
+      
+      return `
+      <div class="comment-item card mb-3 ${isTask ? 'task-item' : ''}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-2">
             <div class="d-flex align-items-center">
-              <i class="bi ${comment.type === 'task' ? 'bi-check-square' : 'bi-chat-dots'} me-2"></i>
-              <strong>${comment.author}</strong>
-              <span class="badge ${comment.type === 'task' ? 'bg-primary' : 'bg-secondary'} ms-2">
-                ${comment.type === 'task' ? 'Tarea' : 'Comentario'}
+              <i class="bi ${isTask ? 'bi-check-square' : 'bi-chat-dots'} me-2"></i>
+              <strong>${authorName}</strong>
+              <span class="badge ${isTask ? 'bg-primary' : 'bg-secondary'} ms-2">
+                ${isTask ? 'Tarea' : 'Comentario'}
               </span>
-              ${comment.type === 'task' && comment.completed ? 
+              ${isTask && comment.completed ? 
                 '<span class="badge bg-success ms-1">Completada</span>' : ''}
             </div>
             <div class="comment-actions">
@@ -197,7 +207,7 @@ class SimpleCommentsController {
           <div class="comment-content">
             <p class="mb-2">${comment.content}</p>
             
-            ${comment.type === 'task' ? `
+            ${isTask ? `
               <div class="task-details mt-2">
                 <div class="row">
                   <div class="col-md-4">
@@ -206,11 +216,11 @@ class SimpleCommentsController {
                       Prioridad: ${this.getPriorityText(comment.priority)}
                     </small>
                   </div>
-                  ${comment.dueDate ? `
+                  ${comment.due_date ? `
                     <div class="col-md-4">
                       <small class="text-muted">
                         <i class="bi bi-calendar me-1"></i>
-                        Vence: ${this.formatDate(comment.dueDate)}
+                        Vence: ${this.formatDate(comment.due_date)}
                       </small>
                     </div>
                   ` : ''}
@@ -227,12 +237,12 @@ class SimpleCommentsController {
           </div>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   async toggleTaskStatus(commentId) {
     const comment = this.comments.find(c => c.id === commentId);
-    if (!comment || comment.type !== 'task') return;
+    if (!comment || !comment.is_task) return;
 
     try {
       const updatedComment = {
@@ -373,9 +383,9 @@ class SimpleCommentsController {
   }
 
   updateStats() {
-    const totalComments = this.comments.filter(c => c.type === 'comment').length;
-    const totalTasks = this.comments.filter(c => c.type === 'task').length;
-    const completedTasks = this.comments.filter(c => c.type === 'task' && c.completed).length;
+    const totalComments = this.comments.filter(c => !c.is_task).length;
+    const totalTasks = this.comments.filter(c => c.is_task).length;
+    const completedTasks = this.comments.filter(c => c.is_task && c.completed).length;
     const pendingTasks = totalTasks - completedTasks;
 
     const statsContainer = document.getElementById('commentsStats');
@@ -428,7 +438,7 @@ class SimpleCommentsController {
   // Utilidades
   canEditComment(comment) {
     const currentUser = authService.getCurrentUser();
-    return currentUser.email === comment.author || authService.isAdmin();
+    return currentUser.id === comment.author_id || authService.isAdmin();
   }
 
   getPriorityText(priority) {

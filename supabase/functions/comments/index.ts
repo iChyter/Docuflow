@@ -53,8 +53,6 @@ Deno.serve(async (req) => {
       }
 
       case 'by-document': {
-        if (!user) throw new Error('Unauthorized')
-        
         const { data: comments } = await supabase
           .from('comments')
           .select('*, profiles(username, full_name)')
@@ -110,7 +108,7 @@ Deno.serve(async (req) => {
               await supabase.from('notifications').insert({
                 title: data.isTask ? 'New Task Assigned' : 'New Comment',
                 message: `${profile.username} ${data.isTask ? 'assigned you a task' : 'commented on a document'}`,
-                user_id: user.id,
+                user_id: assignee,
                 type: 'info',
                 priority: 'medium'
               })

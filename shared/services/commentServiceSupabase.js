@@ -5,6 +5,15 @@ const EDGE_FUNCTION_URL = SUPABASE_CONFIG.functions.comments
 
 async function callEdgeFunction(action, data = {}) {
   const token = authService.getToken()
+  console.log('[commentService] Token:', token ? token.substring(0, 20) + '...' : 'EMPTY');
+  console.log('[commentService] Token length:', token?.length || 0);
+  
+  if (!token) {
+    console.warn('[commentService] No token - checking session...');
+    await authService.checkSession();
+    const refreshedToken = authService.getToken();
+    console.log('[commentService] Token after checkSession:', refreshedToken ? refreshedToken.substring(0, 20) + '...' : 'EMPTY');
+  }
   
   const response = await fetch(EDGE_FUNCTION_URL, {
     method: 'POST',
@@ -15,6 +24,14 @@ async function callEdgeFunction(action, data = {}) {
     body: JSON.stringify({ action, data })
   })
 
+  console.log('[commentService] Response status:', response.status);
+  
+  if (!response.ok) {
+    const text = await response.text();
+    console.error('[commentService] Error response:', text);
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
+  
   const result = await response.json()
   
   if (!result.success) {

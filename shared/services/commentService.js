@@ -26,7 +26,7 @@ async function callEdgeFunction(action, data = {}) {
 
 export async function apiGetCommentsByDocument(documentId) {
   try {
-    const comments = await callEdgeFunction('get-by-document', { documentId });
+    const comments = await callEdgeFunction('by-document', { documentId });
     return { success: true, comments: Array.isArray(comments) ? comments : [] };
   } catch (error) {
     console.error('Error getting comments:', error);

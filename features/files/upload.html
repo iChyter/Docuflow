@@ -882,14 +882,16 @@
           card.style.boxShadow = 'none';
         });
         
+        const numericFileId = parseInt(fileId, 10);
+        
         const card = document.querySelector(`[data-file-id="${fileId}"]`);
         if (card) {
           card.style.borderColor = 'var(--primary-color)';
           card.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
         }
         
-        // Find file - file IDs are UUIDs, not numbers
-        const file = this.files.find(f => f.id === fileId);
+        // Find file by ID (convert string to number for comparison with bigint)
+        const file = this.files.find(f => f.id === numericFileId);
         console.log('File found:', file, 'files length:', this.files.length);
         
         if (!file) {

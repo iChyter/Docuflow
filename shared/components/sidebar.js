@@ -381,7 +381,7 @@ class SidebarComponent {
     const avatarEl = document.getElementById('sidebar-user-avatar');
 
     if (nameEl) {
-      const displayName = user.user_metadata?.username || user.user_metadata?.full_name || user.email || 'Usuario';
+      const displayName = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
       console.log('[Sidebar] Setting username to:', displayName);
       nameEl.textContent = displayName;
     } else {
@@ -389,7 +389,7 @@ class SidebarComponent {
     }
 
     if (avatarEl) {
-      const name = user.user_metadata?.username || user.user_metadata?.full_name || user.email || 'Usuario';
+      const name = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
       avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff`;
     } else {
       console.warn('[Sidebar] Avatar element not found');

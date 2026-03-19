@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DocuFlow - Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/styles/slothui.css">
+  <link rel="stylesheet" href="shared/styles/slothui.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     .quick-access-grid {
@@ -165,14 +165,14 @@
   </main>
   
   <!-- Scripts -->
-  <script type="module" src="../shared/components/sidebar.js"></script>
-  <script type="module" src="../shared/components/rightSidebar.js"></script>
+  <script type="module" src="shared/components/sidebar.js"></script>
+  <script type="module" src="shared/components/rightSidebar.js"></script>
   
   <script type="module">
-    import { authService } from '../shared/services/authServiceSupabase.js';
-    import { profileService } from '../shared/services/profileService.js';
-    import { commentService } from '../shared/services/commentServiceSupabase.js';
-    import { supabase } from '../shared/services/supabaseClient.js';
+    import { authService } from 'shared/services/authServiceSupabase.js';
+    import { profileService } from 'shared/services/profileService.js';
+    import { commentService } from 'shared/services/commentServiceSupabase.js';
+    import { supabase } from 'shared/services/supabaseClient.js';
     
     let sidebarComponent = null;
     let rightSidebarComponent = null;
@@ -238,12 +238,12 @@
       await loadStats();
       
       // Load sidebar
-      const { default: SidebarComponent } = await import('../shared/components/sidebar.js');
+      const { default: SidebarComponent } = await import('shared/components/sidebar.js');
       sidebarComponent = new SidebarComponent();
       sidebarComponent.init();
       
       // Load right sidebar
-      const { default: RightSidebarComponent } = await import('../shared/components/rightSidebar.js');
+      const { default: RightSidebarComponent } = await import('shared/components/rightSidebar.js');
       rightSidebarComponent = new RightSidebarComponent();
       rightSidebarComponent.init();
     }

@@ -369,7 +369,7 @@ class SidebarComponent {
     }
   }
 
-  updateUserInfo(user) {
+  async updateUserInfo(user) {
     if (!user) {
       console.warn('[Sidebar] updateUserInfo called with null user');
       return;
@@ -380,19 +380,29 @@ class SidebarComponent {
     const nameEl = document.getElementById('sidebar-user-name');
     const avatarEl = document.getElementById('sidebar-user-avatar');
 
+    // Get username from profiles table to match edited profile
+    let username = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
+    try {
+      const { supabase } = await import('../../shared/services/supabaseClient.js');
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+      if (profile?.username) {
+        username = profile.username;
+      }
+    } catch (e) {
+      console.warn('[Sidebar] Could not fetch profile username:', e);
+    }
+
     if (nameEl) {
-      const displayName = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
-      console.log('[Sidebar] Setting username to:', displayName);
-      nameEl.textContent = displayName;
-    } else {
-      console.warn('[Sidebar] Name element not found');
+      console.log('[Sidebar] Setting username to:', username);
+      nameEl.textContent = username;
     }
 
     if (avatarEl) {
-      const name = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
-      avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff`;
-    } else {
-      console.warn('[Sidebar] Avatar element not found');
+      avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=6366f1&color=fff`;
     }
   }
 

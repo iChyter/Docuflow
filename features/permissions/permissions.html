@@ -225,20 +225,20 @@
         const roleSelect = document.getElementById('newRole');
         const saveBtn = document.getElementById('btn-save-role');
         
-        if (roleSelect && !this.canManagePermissions) {
+        if (roleSelect && !this.isAdmin) {
           roleSelect.disabled = true;
-          roleSelect.title = 'No tienes permiso para gestionar roles';
+          roleSelect.title = 'Solo administradores pueden gestionar roles';
         }
         
-        if (saveBtn && !this.canManagePermissions) {
+        if (saveBtn && !this.isAdmin) {
           saveBtn.disabled = true;
           saveBtn.style.opacity = '0.5';
-          saveBtn.title = 'No tienes permiso para guardar cambios de rol';
+          saveBtn.title = 'Solo administradores pueden guardar cambios de rol';
         }
         
-        // Mensaje si no puede gestionar permisos
+        // Mensaje si no es admin
         const roleSection = document.querySelector('.sidebar-section:last-child');
-        if (roleSection && !this.canManagePermissions) {
+        if (roleSection && !this.isAdmin) {
           let msg = document.getElementById('admin-msg');
           if (!msg) {
             msg = document.createElement('div');
@@ -361,8 +361,10 @@
         saveBtn.disabled = !this.isAdmin;
         
         if (!this.isAdmin) {
+          roleSelect.title = 'Solo administradores pueden cambiar roles';
           saveBtn.title = 'Solo administradores pueden cambiar roles';
         } else {
+          roleSelect.title = '';
           saveBtn.title = '';
         }
       }

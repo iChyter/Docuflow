@@ -233,6 +233,12 @@
     }
     
     async function init() {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = './features/auth/login.html';
+        return;
+      }
+      
       await loadUserInfo();
       await loadStats();
       

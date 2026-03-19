@@ -181,6 +181,28 @@ Deno.serve(async (req) => {
         
         const { data: comment } = await supabase
           .from('comments')
+          .select('author_id')
+          .eq('id', data.id)
+          .single()
+
+        if (!comment) throw new Error('Comment not found')
+
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        const isAdmin = currentProfile?.role === 'admin'
+        const isAuthor = comment.author_id === user.id
+        const isColaborador = currentProfile?.role === 'colaborador'
+
+        if (!isAdmin && !(isAuthor && isColaborador)) {
+          throw new Error('Forbidden')
+        }
+
+        const { data: updatedComment } = await supabase
+          .from('comments')
           .update({
             assignees: data.assignees,
             updated_at: new Date().toISOString()
@@ -189,13 +211,35 @@ Deno.serve(async (req) => {
           .select()
           .single()
         
-        result = comment
+        result = updatedComment
         break
       }
 
       case 'complete': {
         if (!user) throw new Error('Unauthorized')
         
+        const { data: existingComment } = await supabase
+          .from('comments')
+          .select('author_id, assignees, document_id')
+          .eq('id', data.id)
+          .single()
+
+        if (!existingComment) throw new Error('Comment not found')
+
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        const isAdmin = currentProfile?.role === 'admin'
+        const isAuthor = existingComment.author_id === user.id
+        const isAssignee = existingComment.assignees?.includes(user.id)
+
+        if (!isAdmin && !isAuthor && !isAssignee) {
+          throw new Error('Forbidden')
+        }
+
         const { data: comment } = await supabase
           .from('comments')
           .update({

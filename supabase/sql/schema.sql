@@ -254,6 +254,130 @@ end;
 $$;
 
 
+-- Función para verificar si el usuario puede asignar comentarios
+-- Admin puede asignar cualquier comentario
+-- Colaborador puede asignar solo sus propios comentarios
+create or replace function public.can_assign_comment(comment_author_id uuid)
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+    current_user_id uuid;
+begin
+    current_user_id := auth.uid();
+    
+    select role into user_role
+    from public.profiles
+    where id = current_user_id;
+    
+    -- admin puede asignar cualquier comentario
+    if user_role = 'admin' then
+        return true;
+    end if;
+    
+    -- colaborador puede asignar solo sus propios comentarios
+    if comment_author_id = current_user_id and user_role = 'colaborador' then
+        return true;
+    end if;
+    
+    return false;
+end;
+$$;
+
+
+-- Función para verificar si el usuario puede completar tareas
+-- Admin puede completar cualquier tarea
+-- Autor puede completar sus propias tareas
+-- Asignados pueden completar tareas donde están asignados
+create or replace function public.can_complete_task(comment_author_id uuid, comment_assignees text[])
+returns boolean
+language plpgsql
+security definer
+as $$
+declare
+    user_role text;
+    current_user_id uuid;
+begin
+    current_user_id := auth.uid();
+    
+    select role into user_role
+    from public.profiles
+    where id = current_user_id;
+    
+    -- admin puede completar cualquier tarea
+    if user_role = 'admin' then
+        return true;
+    end if;
+    
+    -- autor puede completar sus propias tareas
+    if comment_author_id = current_user_id then
+        return true;
+    end if;
+    
+    -- asignado puede completar si está en la lista de asignados
+    if current_user_id::text = any(comment_assignees) then
+        return true;
+    end if;
+    
+    return false;
+end;
+$$;
+
+
+-- Función RPC para asignar comentarios (con permisos)
+create or replace function public.rpc_assign_comment(comment_id bigint, new_assignees text[])
+returns public.comments
+language plpgsql
+security definer
+as $$
+declare
+    comment_record public.comments;
+begin
+    -- Verificar permisos
+    if not public.can_assign_comment((select author_id from public.comments where id = comment_id)) then
+        raise exception 'Forbidden';
+    end if;
+    
+    -- Actualizar asignados
+    update public.comments
+    set assignees = new_assignees, updated_at = now()
+    where id = comment_id
+    returning * into comment_record;
+    
+    return comment_record;
+end;
+$$;
+
+
+-- Función RPC para completar tareas (con permisos)
+create or replace function public.rpc_complete_task(comment_id bigint, completed boolean)
+returns public.comments
+language plpgsql
+security definer
+as $$
+declare
+    comment_record public.comments;
+begin
+    -- Verificar permisos
+    if not public.can_complete_task(
+        (select author_id from public.comments where id = comment_id),
+        (select assignees from public.comments where id = comment_id)
+    ) then
+        raise exception 'Forbidden';
+    end if;
+    
+    -- Actualizar completado
+    update public.comments
+    set completed = completed, updated_at = now()
+    where id = comment_id and is_task = true
+    returning * into comment_record;
+    
+    return comment_record;
+end;
+$$;
+
 
 -- Función para actualizar updated_at automáticamente
 create or replace function update_updated_at_column()
@@ -376,10 +500,14 @@ create policy "Authenticated users can create comments"
         auth.role() = 'authenticated'
     );
 
--- Admin puede editar cualquier comentario, autor puede editar sus propios
-create policy "Admin or author can update comments"
+-- Admin o autor pueden actualizar contenido del comentario
+-- (assign y complete deben usar RPC)
+create policy "Admin or author can update comment content"
     on public.comments for update
     using (
+        public.can_edit_comment(author_id)
+    )
+    with check (
         public.can_edit_comment(author_id)
     );
 
@@ -389,6 +517,20 @@ create policy "Admin or author can delete comments"
     using (
         public.can_edit_comment(author_id)
     );
+
+-- Permitir execution de funciones RPC para comments
+-- (los permisos se verifican dentro de cada función RPC)
+create policy "Users can call comment RPC functions"
+    on public.comments for select
+    using (true);
+
+create policy "Users can execute assign RPC"
+    on public.comments for select
+    using (true);
+
+create policy "Users can execute complete RPC"
+    on public.comments for select
+    using (true);
 
 -- =====================================================
 -- POLÍTICAS RLS - LOGS

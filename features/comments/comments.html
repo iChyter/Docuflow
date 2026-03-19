@@ -65,22 +65,23 @@
         
         <div class="file-preview" id="comment-preview">
           <div class="file-preview-icon" style="background: var(--surface-hover);">
-            <i class="bi bi-chat-square-text" style="color: var(--primary-color); font-size: 32px;"></i>
+            <i class="bi bi-chat-square-text" style="color: var(--primary-color); font-size: 32px;" id="preview-icon"></i>
           </div>
           <div class="file-preview-title" id="preview-author">Selecciona un comentario</div>
           <div class="file-preview-meta" id="preview-date">Haz clic en un comentario para verlo</div>
           <div class="file-preview-meta" id="preview-assignees" style="margin-top: 8px; color: var(--primary-color);"></div>
+          <div class="file-preview-meta" id="preview-status" style="margin-top: 8px;"></div>
         </div>
       </div>
 
       <div class="sidebar-section" id="task-actions-section" style="display: none;">
         <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Acciones de Tarea</span>
+          <span class="sidebar-section-title">Acciones</span>
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <button class="btn-success" id="btn-complete-task" onclick="window.completeTask()" style="padding: 10px 20px; border: none; border-radius: 10px; background: var(--success); color: white; cursor: pointer; opacity: 0.4;" disabled>
-            <i class="bi bi-check-circle"></i> <span id="btn-complete-text">Marcar como completada</span>
+          <button id="btn-complete-task" onclick="window.completeTask()" style="padding: 10px 20px; border: none; border-radius: 10px; background: var(--success); color: white; cursor: pointer; opacity: 0.4;" disabled>
+            <i class="bi bi-check-circle" id="btn-complete-icon"></i> <span id="btn-complete-text">Marcar como completada</span>
           </button>
         </div>
       </div>
@@ -113,6 +114,12 @@
         <div style="margin-bottom: 16px;">
           <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px;">Contenido</label>
           <textarea id="commentContent" rows="4" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Geologica', sans-serif; font-size: 14px; background: var(--surface-hover); resize: vertical;" placeholder="Escribe tu comentario..."></textarea>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="commentIsTask" style="width: 18px; height: 18px; cursor: pointer;">
+            <span style="font-weight: 500; font-size: 14px;">Marcar como tarea</span>
+          </label>
         </div>
       </div>
       <div style="padding: 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px;">
@@ -234,8 +241,9 @@
           const user = await authService.getCurrentUser();
           if (user) {
             this.currentUserId = user.id;
-            this.currentUserRole = 'user';
-            console.log('Current user from authService:', this.currentUserId);
+            const profile = await profileService.getCurrentProfile().catch(() => null);
+            this.currentUserRole = profile?.role || 'user';
+            console.log('Current user:', this.currentUserId, 'Role:', this.currentUserRole);
           } else {
             const profile = await profileService.getCurrentProfile().catch(() => null);
             if (profile) {
@@ -259,9 +267,27 @@
 
       canDelete(comment) {
         if (!this.currentUserId) return false;
-        const isOwner = comment.author_id === this.currentUserId || comment.author === this.currentUserId;
+        const isOwner = String(comment.author_id) === String(this.currentUserId) || String(comment.author) === String(this.currentUserId);
         const isAdmin = this.currentUserRole === 'admin';
         return isOwner || isAdmin;
+      }
+
+      canAssign(comment) {
+        if (!this.currentUserId) return false;
+        console.log('[canAssign] role:', this.currentUserRole);
+        if (this.currentUserRole === 'admin') return true;
+        const isAuthor = String(comment.author_id) === String(this.currentUserId) || String(comment.author) === String(this.currentUserId);
+        const isColaborador = this.currentUserRole === 'colaborador';
+        console.log('[canAssign] isAuthor:', isAuthor, 'isColaborador:', isColaborador);
+        return isAuthor && isColaborador;
+      }
+
+      canComplete(comment) {
+        if (!this.currentUserId) return false;
+        if (this.currentUserRole === 'admin') return true;
+        const isAuthor = String(comment.author_id) === String(this.currentUserId) || String(comment.author) === String(this.currentUserId);
+        const isAssignee = comment.assignees?.map(a => String(a)).includes(String(this.currentUserId));
+        return isAuthor || isAssignee;
       }
 
       async loadComments() {
@@ -301,14 +327,12 @@
         }
       }
 
-      async renderComments() {
+      renderComments() {
         const container = document.getElementById('comments-list');
         if (!container) return;
-
-        const user = await authService.getCurrentUser();
         
         if (this.filteredComments.length === 0) {
-          if (!user) {
+          if (!this.currentUserId) {
             container.innerHTML = `
               <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
                 <i class="bi bi-chat-square-text" style="font-size: 64px; margin-bottom: 16px; display: block;"></i>
@@ -330,32 +354,6 @@
           return;
         }
 
-        // Load all assignee profiles at once
-        const allAssigneeIds = this.filteredComments
-          .filter(c => c.assignees && c.assignees.length > 0)
-          .flatMap(c => c.assignees);
-        
-        const uniqueAssigneeIds = [...new Set(allAssigneeIds)];
-        let assigneeProfiles = {};
-        
-        if (uniqueAssigneeIds.length > 0) {
-          try {
-            const { supabase } = await import('../../shared/services/supabaseClient.js');
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('id, username, full_name')
-              .in('id', uniqueAssigneeIds);
-            
-            if (profiles) {
-              profiles.forEach(p => {
-                assigneeProfiles[p.id] = p.full_name || p.username;
-              });
-            }
-          } catch (error) {
-            console.error('Error loading assignee profiles:', error);
-          }
-        }
-
         container.innerHTML = this.filteredComments.map(comment => {
           const authorName = comment.author_username || comment.author || 'Usuario';
           const isTask = comment.is_task;
@@ -363,10 +361,12 @@
           const iconClass = isTask ? (isCompleted ? 'bi-check-circle-fill text-success' : 'bi-list-task text-primary') : 'bi-chat-dots text-primary';
           const iconBg = isTask ? (isCompleted ? 'var(--success)20' : 'var(--primary-color)20') : 'var(--primary-color)20';
           const titleStyle = isCompleted ? 'text-decoration: line-through; opacity: 0.7;' : '';
+          const completedBorder = isCompleted ? 'border-color: var(--success) !important; box-shadow: 0 0 0 2px var(--success)30;' : '';
           
-          const assigneesHtml = comment.assignees && comment.assignees.length > 0
+          const assigneesCount = comment.assignees?.length || 0;
+          const assigneesHtml = assigneesCount > 0
             ? `<div style="font-size: 12px; color: var(--primary-color); margin-top: 4px;">
-                <i class="bi bi-person-check"></i> Asignado a: ${comment.assignees.map(id => assigneeProfiles[id] || 'Usuario').join(', ')}
+                <i class="bi bi-person-check"></i> Asignado a ${assigneesCount} usuario${assigneesCount > 1 ? 's' : ''}
                </div>`
             : '';
           
@@ -375,7 +375,7 @@
             : '';
           
           return `
-            <div class="card comment-card ${isTask ? 'task-card' : ''}" data-comment-id="${comment.id}" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; ${isCompleted ? 'opacity: 0.8;' : ''}">
+            <div class="card comment-card ${isTask ? 'task-card' : ''}" data-comment-id="${comment.id}" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; ${completedBorder} ${isCompleted ? 'opacity: 0.8;' : ''}">
               <div style="display: flex; gap: 16px;">
                 <div style="width: 40px; height: 40px; background: ${iconBg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                   <i class="bi ${iconClass}" style="font-size: 20px;"></i>
@@ -395,7 +395,6 @@
           `;
         }).join('');
         
-        // Use event delegation for comment selection
         container.onclick = (e) => {
           const card = e.target.closest('.comment-card');
           if (card) {
@@ -433,31 +432,52 @@
 
       enableButtonsForComment(comment) {
         const canDelete = this.canDelete(comment);
+        const canAssign = this.canAssign(comment);
+        const canComplete = this.canComplete(comment);
+        
+        console.log('[enableButtons] currentUserRole:', this.currentUserRole, 'comment.author_id:', comment.author_id, 'currentUserId:', this.currentUserId);
+        console.log('[enableButtons] canDelete:', canDelete, 'canAssign:', canAssign, 'canComplete:', canComplete);
+        
         const deleteBtn = document.getElementById('btn-delete-comment');
         if (deleteBtn) {
           deleteBtn.disabled = false;
           deleteBtn.style.opacity = canDelete ? '1' : '0.6';
           deleteBtn.title = canDelete ? 'Eliminar comentario' : 'Solo el autor o un admin pueden eliminar';
         }
+        
         const assignBtn = document.getElementById('btn-assign-comment');
         if (assignBtn) {
-          assignBtn.disabled = false;
-          assignBtn.style.opacity = '1';
-          assignBtn.title = 'Asignar comentario';
+          assignBtn.disabled = !canAssign;
+          assignBtn.style.opacity = canAssign ? '1' : '0.4';
+          assignBtn.title = canAssign ? 'Asignar comentario' : 'Solo el autor (colaborador) o admin pueden asignar';
         }
         
-        // Task-specific actions
         const taskActionsSection = document.getElementById('task-actions-section');
         const completeBtn = document.getElementById('btn-complete-task');
         const completeText = document.getElementById('btn-complete-text');
+        const canCompleteTask = this.canComplete(comment);
         
-        if (comment.is_task) {
+        console.log('[enableButtons] is_task:', comment.is_task, 'canComplete:', canCompleteTask);
+        
+        if (canCompleteTask) {
           if (taskActionsSection) taskActionsSection.style.display = 'block';
           if (completeBtn) {
             completeBtn.disabled = false;
             completeBtn.style.opacity = '1';
-            if (completeText) {
-              completeText.textContent = comment.completed ? 'Marcar como pendiente' : 'Marcar como completada';
+            if (comment.completed) {
+              completeBtn.style.background = 'var(--surface-hover)';
+              completeBtn.style.color = 'var(--text-secondary)';
+              completeBtn.style.border = '1px solid var(--border)';
+              if (completeText) completeText.textContent = 'Marcar como pendiente';
+              const btnIcon = document.getElementById('btn-complete-icon');
+              if (btnIcon) btnIcon.className = 'bi bi-arrow-counterclockwise';
+            } else {
+              completeBtn.style.background = 'var(--success)';
+              completeBtn.style.color = 'white';
+              completeBtn.style.border = 'none';
+              if (completeText) completeText.textContent = 'Marcar como completada';
+              const btnIcon = document.getElementById('btn-complete-icon');
+              if (btnIcon) btnIcon.className = 'bi bi-check-circle';
             }
           }
         } else {
@@ -490,6 +510,24 @@
         document.getElementById('preview-author').textContent = comment.author_username || comment.author || 'Usuario';
         document.getElementById('preview-date').textContent = this.formatDate(comment.created_at);
         
+        const previewIcon = document.getElementById('preview-icon');
+        const previewStatus = document.getElementById('preview-status');
+        const canUserComplete = this.canComplete(comment);
+        
+        if (comment.completed) {
+          previewIcon.className = 'bi bi-check-circle-fill';
+          previewIcon.style.color = 'var(--success)';
+          previewStatus.innerHTML = '<span style="color: var(--success);"><i class="bi bi-check-circle"></i> Completada</span>';
+        } else if (canUserComplete) {
+          previewIcon.className = comment.is_task ? 'bi bi-list-task' : 'bi bi-chat-square-text';
+          previewIcon.style.color = 'var(--warning)';
+          previewStatus.innerHTML = '<span style="color: var(--warning);"><i class="bi bi-clock"></i> Pendiente</span>';
+        } else {
+          previewIcon.className = comment.is_task ? 'bi bi-list-task' : 'bi bi-chat-square-text';
+          previewIcon.style.color = 'var(--primary-color)';
+          previewStatus.innerHTML = '';
+        }
+        
         // Load and display assignees
         this.loadAssigneesDisplay(comment);
         
@@ -499,21 +537,17 @@
 
       completeTask() {
         const comment = window.commentsController?.selectedComment;
-        if (!comment || !comment.is_task) {
-          alert('Selecciona una tarea primero');
+        if (!comment) {
           return;
         }
         
         const newCompletedStatus = !comment.completed;
         
         commentService.complete(comment.id, newCompletedStatus).then(() => {
-          window.commentsController.loadComments().then(() => {
-            window.commentsController.selectComment(comment.id);
-          });
-          alert(newCompletedStatus ? 'Tarea completada' : 'Tarea marcada como pendiente');
+          comment.completed = newCompletedStatus;
+          window.commentsController.selectComment(comment.id);
         }).catch(error => {
           console.error('Error completing task:', error);
-          alert('Error al actualizar la tarea');
         });
       }
 
@@ -534,7 +568,12 @@
             .in('id', comment.assignees);
           
           if (profiles && profiles.length > 0) {
-            const names = profiles.map(p => p.full_name || p.username).join(', ');
+            const currentUserId = this.currentUserId;
+            const names = profiles.map(p => {
+              const isCurrentUser = String(p.id) === String(currentUserId);
+              const name = p.full_name || p.username;
+              return isCurrentUser ? `<strong style="color: var(--primary-color);">${name} (tú)</strong>` : name;
+            }).join(', ');
             assigneesDiv.innerHTML = `<i class="bi bi-person-check"></i> Asignado a: ${names}`;
           } else {
             assigneesDiv.innerHTML = '';
@@ -595,6 +634,7 @@
 
       async saveComment() {
         const content = document.getElementById('commentContent').value.trim();
+        const isTask = document.getElementById('commentIsTask').checked;
         
         if (!content) {
           alert('Por favor escribe un comentario');
@@ -602,9 +642,10 @@
         }
 
         try {
-          await commentService.create(content, null, false, []);
+          await commentService.create(content, null, isTask, []);
           
           this.closeCommentModal();
+          document.getElementById('commentIsTask').checked = false;
           await this.loadComments();
         } catch (error) {
           console.error('Error saving comment:', error);

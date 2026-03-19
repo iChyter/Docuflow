@@ -111,6 +111,14 @@
     import { authService } from '../../shared/services/authServiceSupabase.js';
     import { supabase } from '../../shared/services/supabaseClient.js';
 
+    // Auth guard
+    authService.checkSession().then(async () => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = '../auth/login.html';
+        return;
+      }
+
     class SettingsController {
       constructor() {
         this.user = null;
@@ -283,6 +291,7 @@
         window.location.href = '../auth/login.html';
       }
     };
+    }); // End auth guard
   </script>
 </body>
 </html>

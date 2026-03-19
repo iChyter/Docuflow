@@ -2,6 +2,14 @@ import { commentService } from '../../shared/services/commentServiceSupabase.js'
 import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification, Pagination } from '../../shared/utils/uiHelpers.js';
 
+// Auth guard
+authService.checkSession().then(async () => {
+  const user = await authService.getCurrentUser();
+  if (!user) {
+    window.location.href = '../auth/login.html';
+    return;
+  }
+
 class CommentsController {
   constructor() {
     this.comments = [];
@@ -336,3 +344,4 @@ let commentsController;
 document.addEventListener('DOMContentLoaded', () => {
   commentsController = new CommentsController();
 });
+}); // End auth guard

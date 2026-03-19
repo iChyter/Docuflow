@@ -73,6 +73,18 @@
         </div>
       </div>
 
+      <div class="sidebar-section" id="task-actions-section" style="display: none;">
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">Acciones de Tarea</span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button class="btn-success" id="btn-complete-task" onclick="window.completeTask()" style="padding: 10px 20px; border: none; border-radius: 10px; background: var(--success); color: white; cursor: pointer; opacity: 0.4;" disabled>
+            <i class="bi bi-check-circle"></i> <span id="btn-complete-text">Marcar como completada</span>
+          </button>
+        </div>
+      </div>
+
       <div class="sidebar-section">
         <div class="sidebar-section-header">
           <span class="sidebar-section-title">Acciones</span>
@@ -178,6 +190,14 @@
     import { commentService } from '../../shared/services/commentServiceSupabase.js';
     import { authService } from '../../shared/services/authServiceSupabase.js';
     import { profileService } from '../../shared/services/profileService.js';
+
+    // Auth guard
+    authService.checkSession().then(async () => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = '../auth/login.html';
+        return;
+      }
 
     class CommentsController {
       constructor() {
@@ -338,24 +358,36 @@
 
         container.innerHTML = this.filteredComments.map(comment => {
           const authorName = comment.author_username || comment.author || 'Usuario';
+          const isTask = comment.is_task;
+          const isCompleted = comment.completed;
+          const iconClass = isTask ? (isCompleted ? 'bi-check-circle-fill text-success' : 'bi-list-task text-primary') : 'bi-chat-dots text-primary';
+          const iconBg = isTask ? (isCompleted ? 'var(--success)20' : 'var(--primary-color)20') : 'var(--primary-color)20';
+          const titleStyle = isCompleted ? 'text-decoration: line-through; opacity: 0.7;' : '';
+          
           const assigneesHtml = comment.assignees && comment.assignees.length > 0
             ? `<div style="font-size: 12px; color: var(--primary-color); margin-top: 4px;">
                 <i class="bi bi-person-check"></i> Asignado a: ${comment.assignees.map(id => assigneeProfiles[id] || 'Usuario').join(', ')}
                </div>`
             : '';
           
+          const completedBadge = isCompleted
+            ? `<span class="badge bg-success ms-2" style="font-size: 10px;"><i class="bi bi-check"></i> Completada</span>`
+            : '';
+          
           return `
-            <div class="card comment-card" data-comment-id="${comment.id}" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
+            <div class="card comment-card ${isTask ? 'task-card' : ''}" data-comment-id="${comment.id}" style="padding: 20px; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; ${isCompleted ? 'opacity: 0.8;' : ''}">
               <div style="display: flex; gap: 16px;">
-                <div style="width: 40px; height: 40px; background: var(--primary-color)20; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <i class="bi bi-chat-dots" style="color: var(--primary-color); font-size: 20px;"></i>
+                <div style="width: 40px; height: 40px; background: ${iconBg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <i class="bi ${iconClass}" style="font-size: 20px;"></i>
                 </div>
                 <div style="flex: 1;">
                   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                    <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${authorName}</div>
+                    <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); ${titleStyle}">
+                      ${authorName} ${isTask ? '<span class="badge bg-primary ms-1" style="font-size: 10px;">Tarea</span>' : ''} ${completedBadge}
+                    </div>
                     <div style="font-size: 12px; color: var(--text-muted);">${this.formatDate(comment.created_at)}</div>
                   </div>
-                  <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">${comment.content}</div>
+                  <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; ${titleStyle}">${comment.content}</div>
                   ${assigneesHtml}
                 </div>
               </div>
@@ -386,6 +418,17 @@
           assignBtn.style.opacity = '0.4';
           assignBtn.title = 'Selecciona un comentario primero';
         }
+        
+        // Hide task actions section
+        const taskActionsSection = document.getElementById('task-actions-section');
+        if (taskActionsSection) {
+          taskActionsSection.style.display = 'none';
+        }
+        const completeBtn = document.getElementById('btn-complete-task');
+        if (completeBtn) {
+          completeBtn.disabled = true;
+          completeBtn.style.opacity = '0.4';
+        }
       }
 
       enableButtonsForComment(comment) {
@@ -401,6 +444,24 @@
           assignBtn.disabled = false;
           assignBtn.style.opacity = '1';
           assignBtn.title = 'Asignar comentario';
+        }
+        
+        // Task-specific actions
+        const taskActionsSection = document.getElementById('task-actions-section');
+        const completeBtn = document.getElementById('btn-complete-task');
+        const completeText = document.getElementById('btn-complete-text');
+        
+        if (comment.is_task) {
+          if (taskActionsSection) taskActionsSection.style.display = 'block';
+          if (completeBtn) {
+            completeBtn.disabled = false;
+            completeBtn.style.opacity = '1';
+            if (completeText) {
+              completeText.textContent = comment.completed ? 'Marcar como pendiente' : 'Marcar como completada';
+            }
+          }
+        } else {
+          if (taskActionsSection) taskActionsSection.style.display = 'none';
         }
       }
 
@@ -434,6 +495,26 @@
         
         // Enable buttons
         this.enableButtonsForComment(comment);
+      }
+
+      completeTask() {
+        const comment = window.commentsController?.selectedComment;
+        if (!comment || !comment.is_task) {
+          alert('Selecciona una tarea primero');
+          return;
+        }
+        
+        const newCompletedStatus = !comment.completed;
+        
+        commentService.complete(comment.id, newCompletedStatus).then(() => {
+          window.commentsController.loadComments().then(() => {
+            window.commentsController.selectComment(comment.id);
+          });
+          alert(newCompletedStatus ? 'Tarea completada' : 'Tarea marcada como pendiente');
+        }).catch(error => {
+          console.error('Error completing task:', error);
+          alert('Error al actualizar la tarea');
+        });
       }
 
       async loadAssigneesDisplay(comment) {
@@ -679,6 +760,8 @@
     window.openAssignModal = () => window.commentsController.openAssignModal();
     window.closeAssignModal = () => window.commentsController.closeAssignModal();
     window.saveAssignment = () => window.commentsController.saveAssignment();
+    window.completeTask = () => window.commentsController.completeTask();
+    }); // End auth guard
   </script>
 </body>
 </html>

@@ -202,6 +202,14 @@
   <script type="module">
     import { authService } from '../../shared/services/authServiceSupabase.js';
 
+    // Auth guard
+    authService.checkSession().then(async () => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = '../auth/login.html';
+        return;
+      }
+
     class ExportController {
       constructor() {
         this.exportHistory = JSON.parse(localStorage.getItem('exportHistory') || '[]');
@@ -382,6 +390,7 @@
     
     // Initialize immediately
     exportController.init();
+    }); // End auth guard
   </script>
 </body>
 </html>

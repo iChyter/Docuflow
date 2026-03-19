@@ -258,11 +258,19 @@
   <script type="module" src="../../shared/components/rightSidebar.js"></script>
   
   <script type="module">
+    import { authService } from '../../shared/services/authServiceSupabase.js';
     import { fileService } from '../../shared/services/fileServiceSupabase.js';
     import { commentService } from '../../shared/services/commentServiceSupabase.js';
     import { userService } from '../../shared/services/userServiceSupabase.js';
     import { logService } from '../../shared/services/logServiceSupabase.js';
-    import { authService } from '../../shared/services/authServiceSupabase.js';
+
+    // Auth guard - redirect to login if not authenticated
+    authService.checkSession().then(async () => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = '../auth/login.html';
+        return;
+      }
 
     class DashboardController {
       constructor() {
@@ -507,6 +515,7 @@
         dashboard.init();
       }
     }, 500);
+    }); // End auth guard
   </script>
 </body>
 </html>

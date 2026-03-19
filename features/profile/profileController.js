@@ -3,6 +3,14 @@ import { userService } from '../../shared/services/userServiceSupabase.js';
 import { authService } from '../../shared/services/authServiceSupabase.js';
 import { showNotification, showLoading, hideLoading } from '../../shared/utils/uiHelpers.js';
 
+// Auth guard
+authService.checkSession().then(async () => {
+  const user = await authService.getCurrentUser();
+  if (!user) {
+    window.location.href = '../auth/login.html';
+    return;
+  }
+
 class ProfileController {
   constructor() {
     this.currentUser = null;
@@ -690,3 +698,4 @@ export default ProfileController;
 document.addEventListener('DOMContentLoaded', () => {
   window.profileController = new ProfileController();
 });
+}); // End auth guard

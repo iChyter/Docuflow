@@ -344,6 +344,14 @@
     import { fileService } from '../../shared/services/fileServiceSupabase.js';
     import { authService } from '../../shared/services/authServiceSupabase.js';
 
+    // Auth guard
+    authService.checkSession().then(async () => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = '../auth/login.html';
+        return;
+      }
+
     class FilesController {
       constructor() {
         this.files = [];
@@ -1302,6 +1310,7 @@
         createBtn.innerHTML = '<i class="bi bi-folder-plus"></i> Crear';
       }
     };
+    }); // End auth guard
   </script>
   
   <!-- Sidebar Component - Load after main script -->

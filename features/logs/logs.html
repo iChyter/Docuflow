@@ -143,6 +143,14 @@
     import { authService } from '../../shared/services/authServiceSupabase.js';
     import { initPermissionGuard, permissionService } from '../../shared/services/permissionGuard.js';
 
+    // Auth guard
+    authService.checkSession().then(async () => {
+      const user = await authService.getCurrentUser();
+      if (!user) {
+        window.location.href = '../auth/login.html';
+        return;
+      }
+
     class LogsController {
       constructor() {
         this.logs = [];
@@ -344,6 +352,7 @@
     
     window.applyFilters = () => window.logsController.applyFilters();
     window.exportLogs = () => window.logsController.exportLogs();
+    }); // End auth guard
   </script>
 </body>
 </html>

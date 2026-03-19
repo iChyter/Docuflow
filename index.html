@@ -165,14 +165,13 @@
   </main>
   
   <!-- Scripts -->
-  <script type="module" src="shared/components/sidebar.js"></script>
-  <script type="module" src="shared/components/rightSidebar.js"></script>
-  
   <script type="module">
     import { authService } from 'shared/services/authServiceSupabase.js';
     import { profileService } from 'shared/services/profileService.js';
     import { commentService } from 'shared/services/commentServiceSupabase.js';
     import { supabase } from 'shared/services/supabaseClient.js';
+    import { SidebarComponent } from 'shared/components/sidebar.js';
+    import { RightSidebarComponent } from 'shared/components/rightSidebar.js';
     
     let sidebarComponent = null;
     let rightSidebarComponent = null;
@@ -237,13 +236,9 @@
       await loadUserInfo();
       await loadStats();
       
-      // Load sidebar
-      const { default: SidebarComponent } = await import('shared/components/sidebar.js');
       sidebarComponent = new SidebarComponent();
       sidebarComponent.init();
       
-      // Load right sidebar
-      const { default: RightSidebarComponent } = await import('shared/components/rightSidebar.js');
       rightSidebarComponent = new RightSidebarComponent();
       rightSidebarComponent.init();
     }
